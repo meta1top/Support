@@ -55,13 +55,15 @@ export const Dialog: FC<DialogProps> = (props) => {
           <DialogTitle className={cn(!title && "sr-only")}>{title || "Dialog"}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        <div className={cn("min-h-0 flex-1 overflow-auto px-6", !footer && "pb-6")}>{props.children}</div>
+        <div className="min-h-0 flex-1 overflow-auto">
+          <div className={cn("w-fit px-6", !footer && "pb-6")}>{props.children}</div>
+        </div>
         {footer ? <DialogFooter>{footer}</DialogFooter> : null}
         {loading ? (
           <div
             className={cn(
               "absolute top-0 right-0 bottom-0 left-0 rounded-lg",
-              "bg-background/80 backdrop-blur-sm",
+              "bg-background/20 backdrop-blur-sm",
               "flex items-center justify-center",
             )}
           >
