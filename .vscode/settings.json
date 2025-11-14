@@ -43,7 +43,9 @@
 		"nodenext",
 		"idgen",
 		"authub",
-		"esbuild"
+		"esbuild",
+		"dismissable",
+		"cmdk"
 	],
 	"css.customData": ["${workspaceFolder}/.vscode/tailwind.json"],
 	"css.validate": false,

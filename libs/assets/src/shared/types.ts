@@ -1,4 +1,4 @@
-import { StorageProvider } from "./constants";
+import { StorageProvider } from "@meta-1/nest-types";
 
 /**
  * S3 配置
@@ -51,12 +51,3 @@ export interface AssetsConfig {
   /** OSS 配置 */
   oss?: OSSConfig;
 }
-
-// DTO 类已移至 dto 目录
-// 这里保留类型导出以保持向后兼容
-export type {
-  PresignedDownloadUrlRequest,
-  PresignedDownloadUrlResponse,
-  PresignedUploadUrlRequest,
-  PresignedUploadUrlResponse,
-} from "./dto";

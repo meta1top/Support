@@ -4,14 +4,14 @@ import { Injectable, Logger } from "@nestjs/common";
 import ms from "ms";
 
 import { AppError } from "@meta-1/nest-common";
-import type {
-  PresignedDownloadUrlRequest,
-  PresignedDownloadUrlResponse,
-  PresignedUploadUrlRequest,
-  PresignedUploadUrlResponse,
-  S3Config,
-} from "../shared";
-import { ErrorCode as AssetsErrorCode, BucketType } from "../shared";
+import { BucketType } from "@meta-1/nest-types";
+import {
+  PresignedDownloadUrlRequestDto,
+  PresignedDownloadUrlResponseDto,
+  PresignedUploadUrlRequestDto,
+  PresignedUploadUrlResponseDto,
+} from "../dto";
+import { ErrorCode, S3Config } from "../shared";
 
 /**
  * S3 服务
@@ -71,7 +71,7 @@ export class S3Service {
    */
   private ensureInitialized() {
     if (!this.client || !this.config || !this.publicBucket || !this.privateBucket) {
-      throw new AppError(AssetsErrorCode.S3_INIT_ERROR);
+      throw new AppError(ErrorCode.S3_INIT_ERROR);
     }
   }
 
@@ -117,7 +117,7 @@ export class S3Service {
   /**
    * 生成预签名上传 URL
    */
-  async generatePresignedUploadUrl(request: PresignedUploadUrlRequest): Promise<PresignedUploadUrlResponse> {
+  async generatePresignedUploadUrl(request: PresignedUploadUrlRequestDto): Promise<PresignedUploadUrlResponseDto> {
     this.ensureInitialized();
 
     const fileKey = this.generateFileKey(request.fileName, request.bucketType, request.prefix);
@@ -148,7 +148,9 @@ export class S3Service {
   /**
    * 生成预签名下载 URL（用于私桶）
    */
-  async generatePresignedDownloadUrl(request: PresignedDownloadUrlRequest): Promise<PresignedDownloadUrlResponse> {
+  async generatePresignedDownloadUrl(
+    request: PresignedDownloadUrlRequestDto,
+  ): Promise<PresignedDownloadUrlResponseDto> {
     this.ensureInitialized();
 
     // 公桶直接返回公共 URL

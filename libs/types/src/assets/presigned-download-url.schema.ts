@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { BucketType } from "../constants";
+import { BucketType } from "./assets-consts";
 
 /**
  * 预签名下载 URL 请求参数 Schema

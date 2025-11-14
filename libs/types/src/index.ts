@@ -1,1 +1,2 @@
-export * from "./mail-code.schema";
+export * from "./assets";
+export * from "./message";

@@ -1,18 +1,17 @@
 import { Injectable, Logger } from "@nestjs/common";
 
 import { AppError, ErrorCode as CommonErrorCode } from "@meta-1/nest-common";
+import { StorageProvider } from "@meta-1/nest-types";
 import { AssetsConfigService } from "./config";
+import {
+  PresignedDownloadUrlRequestDto,
+  PresignedDownloadUrlResponseDto,
+  PresignedUploadUrlRequestDto,
+  PresignedUploadUrlResponseDto,
+} from "./dto";
 import { OSSService } from "./oss";
 import { S3Service } from "./s3";
-import {
-  type AssetsConfig,
-  ErrorCode as AssetsErrorCode,
-  type PresignedDownloadUrlRequest,
-  type PresignedDownloadUrlResponse,
-  type PresignedUploadUrlRequest,
-  type PresignedUploadUrlResponse,
-  StorageProvider,
-} from "./shared";
+import { type AssetsConfig, ErrorCode as AssetsErrorCode } from "./shared";
 
 /**
  * 资源服务
@@ -63,7 +62,7 @@ export class AssetsService {
   /**
    * 生成预签名上传 URL
    */
-  async generatePresignedUploadUrl(request: PresignedUploadUrlRequest): Promise<PresignedUploadUrlResponse> {
+  async generatePresignedUploadUrl(request: PresignedUploadUrlRequestDto): Promise<PresignedUploadUrlResponseDto> {
     const provider = this.getCurrentProvider();
 
     if (provider === StorageProvider.S3) {
@@ -84,7 +83,9 @@ export class AssetsService {
   /**
    * 生成预签名下载 URL（用于私桶）
    */
-  async generatePresignedDownloadUrl(request: PresignedDownloadUrlRequest): Promise<PresignedDownloadUrlResponse> {
+  async generatePresignedDownloadUrl(
+    request: PresignedDownloadUrlRequestDto,
+  ): Promise<PresignedDownloadUrlResponseDto> {
     const provider = this.getCurrentProvider();
 
     if (provider === StorageProvider.S3) {
