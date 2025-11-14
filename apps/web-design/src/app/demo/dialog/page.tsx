@@ -228,7 +228,7 @@ const Page = () => {
         title="输入框边框测试"
         visible={visible5}
       >
-        <div className="space-y-4">
+        <div className="mt-1 space-y-4">
           <div className="space-y-2">
             <Input id="input-top" placeholder="检查输入框顶部边框是否被裁切" />
             <p className="text-muted-foreground text-xs">focus 时的边框/阴影效果应该完整显示</p>
