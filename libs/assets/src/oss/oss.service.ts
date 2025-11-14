@@ -120,11 +120,14 @@ export class OSSService {
     const fileKey = this.generateFileKey(request.fileName, request.bucketType, request.prefix);
     const client = this.getClient(request.bucketType);
 
+    // 从 headers 中提取 Content-Type
+    const contentType = request.headers?.["Content-Type"] || "application/octet-stream";
+
     // OSS 签名 URL 用于上传
     const uploadUrl = client.signatureUrl(fileKey, {
       method: "PUT",
       expires: this.expiresInSeconds,
-      "Content-Type": request.contentType,
+      "Content-Type": contentType,
     });
 
     const fileUrl = request.bucketType === BucketType.PUBLIC ? this.getPublicUrl(fileKey, request.bucketType) : fileKey; // 私桶返回 key，需要时再生成下载 URL
@@ -132,8 +135,9 @@ export class OSSService {
     const expiresAt = Date.now() + this.expiresInSeconds * 1000;
 
     return {
-      uploadUrl,
-      fileUrl,
+      fileName: request.fileName,
+      signedUrl: uploadUrl,
+      url: fileUrl,
       fileKey,
       expiresAt,
     };

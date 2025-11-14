@@ -123,10 +123,13 @@ export class S3Service {
     const fileKey = this.generateFileKey(request.fileName, request.bucketType, request.prefix);
     const bucket = this.getBucketName(request.bucketType);
 
+    // 从 headers 中提取 Content-Type
+    const contentType = request.headers?.["Content-Type"] || "application/octet-stream";
+
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: fileKey,
-      ContentType: request.contentType,
+      ContentType: contentType,
     });
 
     const uploadUrl = await getSignedUrl(this.client!, command, {
@@ -138,8 +141,9 @@ export class S3Service {
     const expiresAt = Date.now() + this.expiresInSeconds * 1000;
 
     return {
-      uploadUrl,
-      fileUrl,
+      fileName: request.fileName,
+      signedUrl: uploadUrl,
+      url: fileUrl,
       fileKey,
       expiresAt,
     };
