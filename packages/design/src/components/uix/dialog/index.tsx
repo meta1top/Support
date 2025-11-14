@@ -19,6 +19,7 @@ export interface DialogProps extends PropsWithChildren {
   onCancel?: EventCallback;
   onOk?: EventCallback;
   className?: string;
+  contentClassName?: string;
   maskClosable?: boolean;
   closable?: boolean;
   title?: string;
@@ -33,6 +34,7 @@ export const Dialog: FC<DialogProps> = (props) => {
     onCancel,
     maskClosable = true,
     className,
+    contentClassName,
     closable = true,
     title,
     description,
@@ -56,7 +58,7 @@ export const Dialog: FC<DialogProps> = (props) => {
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-auto">
-          <div className={cn("w-full min-w-fit px-6", !footer && "pb-6")}>{props.children}</div>
+          <div className={cn("w-full min-w-fit px-6 py-1", contentClassName, !footer && "pb-6")}>{props.children}</div>
         </div>
         {footer ? <DialogFooter>{footer}</DialogFooter> : null}
         {loading ? (
