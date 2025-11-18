@@ -60,7 +60,7 @@ export const Dialog: FC<DialogProps> = (props) => {
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-auto">
-          <div className={cn(fitContent && "w-full min-w-fit", "px-6 py-1", contentClassName, !footer && "pb-6")}>
+          <div className={cn("px-6 py-1", fitContent && "w-full min-w-fit", !footer && "pb-6", contentClassName)}>
             {props.children}
           </div>
         </div>
