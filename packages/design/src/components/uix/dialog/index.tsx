@@ -26,6 +26,7 @@ export interface DialogProps extends PropsWithChildren {
   description?: string;
   footer?: React.ReactNode;
   loading?: boolean;
+  fitContent?: boolean;
 }
 
 export const Dialog: FC<DialogProps> = (props) => {
@@ -40,6 +41,7 @@ export const Dialog: FC<DialogProps> = (props) => {
     description,
     footer,
     loading = false,
+    fitContent = false,
   } = props;
 
   return (
@@ -58,7 +60,9 @@ export const Dialog: FC<DialogProps> = (props) => {
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <div className="min-h-0 flex-1 overflow-auto">
-          <div className={cn("w-full min-w-fit px-6 py-1", contentClassName, !footer && "pb-6")}>{props.children}</div>
+          <div className={cn(fitContent && "w-full min-w-fit", "px-6 py-1", contentClassName, !footer && "pb-6")}>
+            {props.children}
+          </div>
         </div>
         {footer ? <DialogFooter>{footer}</DialogFooter> : null}
         {loading ? (
