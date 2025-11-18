@@ -45,13 +45,14 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>((props, ref)
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [tags, setTags] = useState<string[]>(value || defaultValue);
+  const [isComposing, setIsComposing] = useState(false);
 
   const isControlled = value !== undefined;
-  const currentTags = isControlled ? value : tags;
+  const currentTags = isControlled ? value || [] : tags;
 
   useEffect(() => {
     if (isControlled) {
-      setTags(value);
+      setTags(value || []);
     }
   }, [value, isControlled]);
 
@@ -93,7 +94,8 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>((props, ref)
     const target = e.target as HTMLInputElement;
     const value = target.value;
 
-    // Enter 或分隔符键
+    if (isComposing) return;
+
     if (e.key === "Enter" || (typeof separator === "string" && e.key === separator)) {
       e.preventDefault();
       if (value) {
@@ -102,7 +104,6 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>((props, ref)
       return;
     }
 
-    // Backspace 删除最后一个标签
     if (e.key === "Backspace" && !value && currentTags.length > 0) {
       e.preventDefault();
       removeTag(currentTags.length - 1);
@@ -199,6 +200,8 @@ export const TagsInput = forwardRef<HTMLDivElement, TagsInputProps>((props, ref)
         disabled={disabled || (maxTags !== undefined && currentTags.length >= maxTags)}
         onBlur={handleBlur}
         onChange={handleInputChange}
+        onCompositionEnd={() => setIsComposing(false)}
+        onCompositionStart={() => setIsComposing(true)}
         onKeyDown={handleKeyDown}
         placeholder={currentTags.length === 0 ? placeholder : undefined}
         ref={inputRef}
