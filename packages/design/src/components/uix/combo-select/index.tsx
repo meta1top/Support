@@ -16,8 +16,10 @@ import { cn } from "@meta-1/design/lib";
 import type { ButtonProps } from "../button";
 import { Checkbox } from "../checkbox";
 
+export type ComboSelectValueType = string | number;
+
 export interface ComboSelectOptionProps<Data> {
-  value: string;
+  value: ComboSelectValueType;
   label: ReactNode;
   raw?: Data;
 }
@@ -30,8 +32,8 @@ export interface ComboSelectProps<Data = unknown> {
   searchPlaceholder?: string;
   empty?: ReactNode;
   className?: string;
-  onChange?: (value: string | string[]) => void;
-  value?: string | string[];
+  onChange?: (value: ComboSelectValueType | ComboSelectValueType[]) => void;
+  value?: ComboSelectValueType | ComboSelectValueType[];
   loading?: boolean;
   filter?: (value: string, search: string, option?: ComboSelectOptionProps<Data>) => boolean;
   multiple?: boolean;
@@ -58,7 +60,7 @@ function SelectedLabels({
       <>
         {selectedValues.map((v) => {
           // biome-ignore lint/suspicious/noExplicitAny: <options>
-          const label = options.find((option: any) => option.value === v)?.label || v;
+          const label = options.find((option: any) => String(option.value) === v)?.label || v;
           return label ? (
             <div className="my-0.5 mr-1 rounded bg-secondary px-2 py-[3px] text-sm" key={v}>
               {label}
@@ -76,7 +78,7 @@ function SelectedLabels({
   );
 }
 
-function handleSelect(
+function handleSelect<Data>(
   optionValue: string,
   multiple: boolean,
   isSelected: boolean,
@@ -84,8 +86,9 @@ function handleSelect(
   limit: number,
   setSelectedValues: (v: string[]) => void,
   setValueState: (v: string) => void,
-  onChange: (v: string | string[]) => void,
+  onChange: (v: ComboSelectValueType | ComboSelectValueType[]) => void,
   setOpen: (v: boolean) => void,
+  options: ComboSelectOptionProps<Data>[],
 ) {
   if (multiple) {
     if (isSelected) {
@@ -96,13 +99,20 @@ function handleSelect(
       }
       selectedValues.push(optionValue);
     }
-    const v = cloneDeep(selectedValues);
-    setSelectedValues(v);
-    onChange?.(v);
+    const stringValues = cloneDeep(selectedValues);
+    setSelectedValues(stringValues);
+    // 转换回原始类型
+    const originalValues = stringValues
+      .map((v) => options.find((opt) => String(opt.value) === v)?.value)
+      .filter((v) => v !== undefined) as ComboSelectValueType[];
+    onChange?.(originalValues);
   } else {
-    const v = optionValue;
-    setValueState(v);
-    onChange?.(v);
+    setValueState(optionValue);
+    // 转换回原始类型
+    const option = options.find((opt) => String(opt.value) === optionValue);
+    if (option) {
+      onChange?.(option.value);
+    }
     setOpen(false);
   }
 }
@@ -126,7 +136,7 @@ function ComboSelectCommandList<Data>({
   limit: number;
   setSelectedValues: (v: string[]) => void;
   setValueState: (v: string) => void;
-  onChange?: (v: string | string[]) => void;
+  onChange?: (v: ComboSelectValueType | ComboSelectValueType[]) => void;
   onSearch?: (v: string) => void;
   value: string | string[];
   setOpen: (v: boolean) => void;
@@ -135,15 +145,15 @@ function ComboSelectCommandList<Data>({
     <CommandList>
       {loading
         ? null
-        : // biome-ignore lint/suspicious/noExplicitAny: <options>
-          options.map((option: any) => {
-            const isSelected = selectedValues.includes(option.value);
+        : options.map((option) => {
+            const optionValueStr = String(option.value);
+            const isSelected = selectedValues.includes(optionValueStr);
             return (
               <CommandItem
                 key={option.value}
                 onSelect={() =>
                   handleSelect(
-                    option.value,
+                    optionValueStr,
                     multiple,
                     isSelected,
                     selectedValues,
@@ -152,14 +162,17 @@ function ComboSelectCommandList<Data>({
                     setValueState,
                     onChange!,
                     setOpen,
+                    options,
                   )
                 }
-                value={option.value}
+                value={optionValueStr}
               >
                 {multiple ? <Checkbox checked={isSelected} /> : null}
                 {option.label}
                 {multiple ? null : (
-                  <CheckIcon className={cn("ml-auto h-4 w-4", value === option.value ? "opacity-100" : "opacity-0")} />
+                  <CheckIcon
+                    className={cn("ml-auto h-4 w-4", value === optionValueStr ? "opacity-100" : "opacity-0")}
+                  />
                 )}
               </CommandItem>
             );
@@ -174,12 +187,12 @@ type ComboSelectButtonProps<Data> = {
   className?: string;
   placeholderDom: ReactNode;
   options: ComboSelectOptionProps<Data>[];
-  valueState?: string | string[];
+  valueState?: string;
   loading: boolean;
   showClear: boolean;
   setSelectedValues: (v: string[]) => void;
   setValueState: (v: string) => void;
-  onChange?: (v: string | string[]) => void;
+  onChange?: (v: ComboSelectValueType | ComboSelectValueType[]) => void;
   onSearch?: (v: string) => void;
   initLoading: boolean;
 } & Omit<ButtonProps, "onChange">;
@@ -224,7 +237,9 @@ const ComboSelectButton = forwardRef(
             <SelectedLabels options={options} placeholderDom={placeholderDom} selectedValues={selectedValues} />
           ) : (
             <span>
-              {valueState ? options.find((option) => option.value === valueState)?.label || valueState : placeholderDom}
+              {valueState
+                ? options.find((option) => String(option.value) === valueState)?.label || valueState
+                : placeholderDom}
             </span>
           )}
         </div>
@@ -279,19 +294,26 @@ export function ComboSelect<Data = unknown>(props: ComboSelectProps<Data>) {
 
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
-  const [valueState, setValueState] = useState<string | string[] | undefined>(value);
+  // 内部统一使用 string 类型
+  const [valueState, setValueState] = useState<string | undefined>(
+    value !== undefined && !Array.isArray(value) ? String(value) : undefined,
+  );
   const [selectedValues, setSelectedValues] = useState<string[]>(
-    multiple ? ((value || []) as string[]).map((v: string) => `${v || ""}`) : value ? [`${value || ""}`] : [],
+    multiple && Array.isArray(value)
+      ? value.map((v) => String(v))
+      : !multiple && value !== undefined
+        ? [String(value)]
+        : [],
   );
   const size = useSize(containerRef);
 
   useEffect(() => {
-    if (multiple) {
-      setSelectedValues(
-        multiple ? ((value || []) as string[]).map((v: string) => `${v || ""}`) : value ? [`${value || ""}`] : [],
-      );
-    } else {
-      setValueState(value);
+    if (multiple && Array.isArray(value)) {
+      setSelectedValues(value.map((v) => String(v)));
+    } else if (!multiple && value !== undefined && !Array.isArray(value)) {
+      setValueState(String(value));
+    } else if (!multiple && (value === undefined || value === null)) {
+      setValueState(undefined);
     }
   }, [value, multiple]);
 
@@ -328,7 +350,7 @@ export function ComboSelect<Data = unknown>(props: ComboSelectProps<Data>) {
             filter(
               value,
               search,
-              options.find((option) => option.value === value),
+              options.find((option) => String(option.value) === value),
             )
               ? 1
               : 0
@@ -355,7 +377,7 @@ export function ComboSelect<Data = unknown>(props: ComboSelectProps<Data>) {
             setOpen={setOpen}
             setSelectedValues={setSelectedValues}
             setValueState={setValueState}
-            value={value || ""}
+            value={valueState || selectedValues}
           />
         </Command>
       </PopoverContent>

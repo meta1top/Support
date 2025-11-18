@@ -5,17 +5,19 @@ import { Empty } from "@meta-1/design/components/uix/empty";
 import { cn } from "@meta-1/design/lib";
 import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select as UISelect } from "../../ui/select";
 
+export type SelectValueType = string | number;
+
 export interface SelectOptionProps {
-  value: string;
+  value: SelectValueType;
   label: ReactNode;
   disabled?: boolean;
 }
 
 export interface SelectProps {
   options: SelectOptionProps[];
-  value?: string;
+  value?: SelectValueType;
   defaultValue?: string;
-  onChange?: (value: string) => void;
+  onChange?: (value: SelectValueType) => void;
   placeholder?: string;
   className?: string;
   side?: "top" | "right" | "bottom" | "left";
@@ -51,7 +53,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>((props, _ref) =
 
   const handleChange = (val: string) => {
     if (onChange) {
-      onChange(val);
+      // 尝试找到原始选项,返回原始类型的 value
+      const option = options.find((opt) => String(opt.value) === val);
+      if (option) {
+        onChange(option.value);
+      }
     }
     if (!isControlled) {
       setInnerValue(val);
@@ -70,7 +76,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>((props, _ref) =
       onOpenChange={onOpenChange}
       onValueChange={handleChange}
       open={open}
-      value={currentValue}
+      value={currentValue !== undefined ? String(currentValue) : undefined}
     >
       <div className={cn("relative inline-block", allowClear && currentValue ? "group" : "", className)}>
         <SelectTrigger className={cn("flex w-full", triggerClassName)}>
@@ -93,7 +99,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>((props, _ref) =
       >
         {options?.length
           ? options.map((option) => (
-              <SelectItem disabled={option.disabled} key={option.value} value={option.value}>
+              <SelectItem disabled={option.disabled} key={option.value} value={String(option.value)}>
                 {option.label}
               </SelectItem>
             ))
