@@ -7,6 +7,8 @@ export type NacosModuleOptions = {
     group?: string;
     serviceName: string;
     ip?: string;
+    healthy?: boolean;
+    enabled?: boolean;
   };
   config: {
     group?: string;

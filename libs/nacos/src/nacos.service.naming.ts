@@ -12,11 +12,15 @@ import type { NacosModuleOptions } from "./nacos.types";
 export class NacosNamingService implements OnModuleInit, OnModuleDestroy {
   private client: NacosNamingClient;
   private readonly logger = new Logger(NacosNamingService.name);
+  private readonly instanceId: string;
 
   constructor(
     private readonly configService: ConfigService,
     @Inject(NACOS_MODULE_OPTIONS) private readonly options: NacosModuleOptions,
-  ) {}
+  ) {
+    // 初始化时生成唯一的 instanceId，整个生命周期保持不变
+    this.instanceId = uuidv4();
+  }
 
   async onModuleInit() {
     this.client = new NacosNamingClient({
@@ -38,25 +42,39 @@ export class NacosNamingService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleDestroy() {
     if (this.client) {
-      await this.client.deregisterInstance(this.options.naming.serviceName, {
-        instanceId: uuidv4(),
-        healthy: true,
-        enabled: true,
-        ip: this.options.naming.ip ?? this.getCurrentIp(),
-        port: this.configService.get<number>("PORT") ?? 3000,
-      });
+      try {
+        await this.client.deregisterInstance(this.options.naming.serviceName, {
+          instanceId: this.instanceId,
+          healthy: this.options.naming.healthy ?? true,
+          enabled: this.options.naming.enabled ?? true,
+          ip: this.options.naming.ip ?? this.getCurrentIp(),
+          port: this.configService.get<number>("PORT") ?? 3000,
+        });
+        this.logger.log("Successfully deregistered from Nacos");
+      } catch (error) {
+        this.logger.error("Failed to deregister from Nacos", error);
+      }
     }
     this.logger.log("NacosNamingService destroyed");
   }
 
   private async register() {
+    const ip = this.options.naming.ip ?? this.getCurrentIp();
+    const port = this.configService.get<number>("PORT") ?? 3000;
+
+    this.logger.log(
+      `Registering instance: ${this.options.naming.serviceName} at ${ip}:${port} with instanceId: ${this.instanceId}`,
+    );
+
     await this.client.registerInstance(this.options.naming.serviceName, {
-      instanceId: uuidv4(),
-      healthy: true,
-      enabled: true,
-      ip: this.options.naming.ip ?? this.getCurrentIp(),
-      port: this.configService.get<number>("PORT") ?? 3000,
+      instanceId: this.instanceId,
+      healthy: this.options.naming.healthy ?? true,
+      enabled: this.options.naming.enabled ?? true,
+      ip,
+      port,
     });
+
+    this.logger.log("Successfully registered to Nacos");
   }
 
   private getCurrentIp() {
