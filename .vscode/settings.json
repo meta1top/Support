@@ -45,7 +45,8 @@
 		"authub",
 		"esbuild",
 		"dismissable",
-		"cmdk"
+		"cmdk",
+		"presigner"
 	],
 	"css.customData": ["${workspaceFolder}/.vscode/tailwind.json"],
 	"css.validate": false,
