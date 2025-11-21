@@ -46,7 +46,10 @@
 		"esbuild",
 		"dismissable",
 		"cmdk",
-		"presigner"
+		"presigner",
+		"prosemirror",
+		"alicloud",
+		"sesv"
 	],
 	"css.customData": ["${workspaceFolder}/.vscode/tailwind.json"],
 	"css.validate": false,
