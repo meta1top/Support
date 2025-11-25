@@ -49,7 +49,12 @@
 		"presigner",
 		"prosemirror",
 		"alicloud",
-		"sesv"
+		"sesv",
+		"langchain",
+		"modelcontextprotocol",
+		"textsplitters",
+		"qdrant",
+		"deepseek"
 	],
 	"css.customData": ["${workspaceFolder}/.vscode/tailwind.json"],
 	"css.validate": false,

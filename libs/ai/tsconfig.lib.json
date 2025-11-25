@@ -2,10 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": true,
-    "outDir": "../../dist/libs/message",
+    "outDir": "../../dist/libs/ai",
     "composite": true,
     "rootDir": "./src",
-    "tsBuildInfoFile": "../../dist/libs/message/tsconfig.lib.tsbuildinfo"
+    "tsBuildInfoFile": "../../dist/libs/ai/tsconfig.lib.tsbuildinfo"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"],

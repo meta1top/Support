@@ -1,7 +1,7 @@
 {
-  "name": "@meta-1/nest-assets",
-  "version": "0.0.5",
-  "description": "NestJS assets module for S3 and OSS object storage",
+  "name": "@meta-1/nest-ai",
+  "version": "0.0.1",
+  "description": "NestJS AI module for AI services",
   "author": "",
   "license": "MIT",
   "main": "./dist/index.js",
@@ -27,9 +27,13 @@
     "upload"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.0.0",
-    "@aws-sdk/s3-request-presigner": "^3.0.0",
-    "ali-oss": "^6.0.0"
+    "@langchain/textsplitters": "1.0.0",
+    "@langchain/community": "1.0.4",
+    "@langchain/qdrant": "1.0.0",
+    "langchain": "1.0.4",
+    "@langchain/core": "1.0.4",
+    "@langchain/deepseek": "1.0.0",
+    "@modelcontextprotocol/sdk": "1.20.2"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

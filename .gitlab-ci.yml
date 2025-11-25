@@ -112,7 +112,6 @@ publish:nest-message:
     - pnpm build:types
     - pnpm build:common
     - pnpm build:nacos
-    - pnpm build:security
     - pnpm build:message
     - echo "registry=https://${NPM_REGISTRY}/" > ~/.npmrc
     - echo "//${NPM_REGISTRY}/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
@@ -137,6 +136,26 @@ publish:nest-assets:
     - echo "registry=https://${NPM_REGISTRY}/" > ~/.npmrc
     - echo "//${NPM_REGISTRY}/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
     - cd libs/assets/
+    - npm publish --access public
+  tags:
+    - easykit
+
+# 发布 nest-ai 包
+publish:nest-ai:
+  stage: publish
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^nest-ai@/
+  before_script:
+    - pnpm config set store-dir .pnpm-store
+    - pnpm install
+  script:
+    - pnpm build:types
+    - pnpm build:common
+    - pnpm build:nacos
+    - pnpm build:ai
+    - echo "registry=https://${NPM_REGISTRY}/" > ~/.npmrc
+    - echo "//${NPM_REGISTRY}/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+    - cd libs/ai/
     - npm publish --access public
   tags:
     - easykit

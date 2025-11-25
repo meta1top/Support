@@ -22,6 +22,8 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
+      "@meta-1/nest-ai": ["libs/ai/src"],
+      "@meta-1/nest-ai/*": ["libs/ai/src/*"],
       "@meta-1/nest-assets": ["libs/assets/src"],
       "@meta-1/nest-assets/*": ["libs/assets/src/*"],
       "@meta-1/nest-common": ["libs/common/src"],

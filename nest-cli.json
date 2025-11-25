@@ -11,6 +11,16 @@
   "defaultLibraryPrefix": "@meta-1",
   "root": "apps/server-demo",
   "projects": {
+    "ai": {
+      "type": "library",
+      "root": "libs/ai",
+      "entryFile": "index",
+      "sourceRoot": "libs/ai/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/ai/tsconfig.lib.json",
+        "webpack": false
+      }
+    },
     "assets": {
       "type": "library",
       "root": "libs/assets",

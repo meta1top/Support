@@ -10,3 +10,20 @@ onlyBuiltDependencies:
   - esbuild
   - sharp
   - unrs-resolver
+
+overrides:
+  msgpackr: 1.10.1
+  svgo: 3.0.2
+  next: 16.0.4
+  react: 19.2.0
+  react-dom: 19.2.0
+  "@types/react": 19.1.6
+  "@types/react-dom": 19.1.5
+  y-prosemirror: 1.2.9
+  micromatch: 4.0.8
+  svelte: 4.2.19
+  cross-spawn: 7.0.5
+  elliptic: 6.6.1
+  esbuild: 0.25.0
+  nanoid: 3.3.8
+  brace-expansion: 2.0.2
