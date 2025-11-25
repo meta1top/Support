@@ -27,3 +27,13 @@ overrides:
   esbuild: 0.25.0
   nanoid: 3.3.8
   brace-expansion: 2.0.2
+
+peerDependencyRules:
+  ignoreMissing:
+    - dotenv
+    - openai
+  allowedVersions:
+    "@nestjs/core": "11"
+    "@nestjs/common": "11"
+    "@nestjs/typeorm": "11"
+    "reflect-metadata": "*"

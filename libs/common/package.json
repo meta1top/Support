@@ -30,10 +30,10 @@
     "interceptors"
   ],
   "peerDependencies": {
-    "@nestjs/common": "11.0.0",
-    "@nestjs/platform-express": "11.0.0",
-    "nestjs-i18n": "10.5.0",
-    "ioredis": "5.8.0"
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "nestjs-i18n": "^10.5.0",
+    "ioredis": "^5.8.0"
   },
   "dependencies": {
     "chokidar": "4.0.3",

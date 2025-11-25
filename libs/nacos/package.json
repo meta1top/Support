@@ -26,8 +26,8 @@
     "configuration"
   ],
   "peerDependencies": {
-    "@nestjs/common": "11.0.0",
-    "@nestjs/config": "4.0.0"
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.0"
   },
   "dependencies": {
     "nacos": "2.6.0",

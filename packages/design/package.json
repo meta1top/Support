@@ -60,7 +60,7 @@
     "rc-tree": "5.12.4",
     "react-day-picker": "8.10.1",
     "react-dropzone": "14.2.3",
-    "react-hook-form": "7.52.1",
+    "react-hook-form": "^7.55.0",
     "react-resizable-panels": "2.0.20",
     "slate": "0.103.0",
     "slate-history": "0.100.0",

@@ -3,10 +3,10 @@ import { ApiOperation } from "@nestjs/swagger";
 
 import {
   AssetsService,
-  PresignedDownloadUrlRequest,
-  PresignedDownloadUrlResponse,
-  PresignedUploadUrlRequest,
-  PresignedUploadUrlResponse,
+  PresignedDownloadUrlRequestDto,
+  PresignedDownloadUrlResponseDto,
+  PresignedUploadUrlRequestDto,
+  PresignedUploadUrlResponseDto,
 } from "@meta-1/nest-assets";
 import { Public } from "@meta-1/nest-security";
 
@@ -24,7 +24,7 @@ export class AssetsController {
     summary: "生成预签名上传 URL",
     description: "获取文件上传的预签名 URL，支持 S3 和 OSS",
   })
-  async generateUploadUrl(@Body() body: PresignedUploadUrlRequest): Promise<PresignedUploadUrlResponse> {
+  async generateUploadUrl(@Body() body: PresignedUploadUrlRequestDto): Promise<PresignedUploadUrlResponseDto> {
     return this.assetsService.generatePresignedUploadUrl(body);
   }
 
@@ -34,7 +34,7 @@ export class AssetsController {
     summary: "生成预签名下载 URL",
     description: "获取私有文件的预签名下载 URL，支持 S3 和 OSS",
   })
-  async generateDownloadUrl(@Body() body: PresignedDownloadUrlRequest): Promise<PresignedDownloadUrlResponse> {
+  async generateDownloadUrl(@Body() body: PresignedDownloadUrlRequestDto): Promise<PresignedDownloadUrlResponseDto> {
     return this.assetsService.generatePresignedDownloadUrl(body);
   }
 }
