@@ -26,15 +26,15 @@
     "configuration"
   ],
   "peerDependencies": {
-    "@nestjs/common": "^11.0.0",
-    "@nestjs/config": "^4.0.0"
+    "@nestjs/common": "11.0.0",
+    "@nestjs/config": "4.0.0"
   },
   "dependencies": {
-    "nacos": "^2.6.0",
-    "yaml": "^2.8.1"
+    "nacos": "2.6.0",
+    "yaml": "2.8.1"
   },
   "devDependencies": {
-    "@types/node": "^22.10.7",
-    "typescript": "^5.7.3"
+    "@types/node": "22.10.7",
+    "typescript": "5.7.3"
   }
 }
