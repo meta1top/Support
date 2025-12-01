@@ -1,6 +1,8 @@
 import { Logger } from "@nestjs/common";
 import type { Redis } from "ioredis";
 
+import { generateKey } from "../common.utils";
+
 const REDIS_INSTANCE_KEY = Symbol("REDIS_INSTANCE");
 const CACHEABLE_METHODS_KEY = Symbol("CACHEABLE_METHODS");
 
@@ -19,6 +21,13 @@ export function CacheableService(): ClassDecorator {
 /**
  * 缓存装饰器
  * 类似 Spring Boot @Cacheable
+ *
+ * @param options.key - 缓存键名，支持占位符
+ *   - 会自动添加 `cache:` 前缀（如果 key 已以 `cache:` 开头则不会重复添加）
+ *   - #{3}：索引直接取值
+ *   - #{1.book.title}：按路径读取属性
+ *   - #{user.id}：等同于 #{0.user.id}，0 可以省略
+ * @param options.ttl - 缓存过期时间（秒），默认 300 秒
  */
 export function Cacheable(options: { key: string; ttl?: number }): MethodDecorator {
   // biome-ignore lint/suspicious/noExplicitAny: decorator target type
@@ -36,7 +45,8 @@ export function Cacheable(options: { key: string; ttl?: number }): MethodDecorat
         return originalMethod.apply(this, args);
       }
 
-      const cacheKey = generateCacheKey(options.key, args);
+      const generatedKey = generateKey(options.key, args);
+      const cacheKey = generatedKey.startsWith("cache:") ? generatedKey : `cache:${generatedKey}`;
       const ttl = options.ttl || 300;
 
       logger.debug(`Cache key: ${cacheKey}`);
@@ -75,6 +85,9 @@ export function Cacheable(options: { key: string; ttl?: number }): MethodDecorat
 /**
  * 清除缓存装饰器
  * 类似 Spring Boot @CacheEvict
+ *
+ * @param options.key - 缓存键名，支持占位符（会自动添加 `cache:` 前缀）
+ * @param options.allEntries - 是否清除所有缓存，默认 false
  */
 export function CacheEvict(options: { key?: string; allEntries?: boolean }): MethodDecorator {
   // biome-ignore lint/suspicious/noExplicitAny: decorator target type
@@ -98,7 +111,8 @@ export function CacheEvict(options: { key?: string; allEntries?: boolean }): Met
           await redis.flushdb();
           logger.debug("Cleared all cache");
         } else if (options.key) {
-          const cacheKey = generateCacheKey(options.key, args);
+          const generatedKey = generateKey(options.key, args);
+          const cacheKey = generatedKey.startsWith("cache:") ? generatedKey : `cache:${generatedKey}`;
           await redis.del(cacheKey);
           logger.debug(`Evicted cache: ${cacheKey}`);
         }
@@ -130,26 +144,3 @@ export function hasCacheableMetadata(target: any): boolean {
   return Reflect.getMetadata(CACHEABLE_METHODS_KEY, target.constructor) === true;
 }
 
-/**
- * 生成缓存键
- * 支持占位符：#{0}, #{1} 等表示参数位置
- */
-// biome-ignore lint/suspicious/noExplicitAny: generic cache key generation
-function generateCacheKey(pattern: string, args: any[]): string {
-  let cacheKey = pattern;
-
-  // 替换参数占位符 #{0}, #{1}, #{2} ...
-  args.forEach((arg, index) => {
-    cacheKey = cacheKey.replace(new RegExp(`#\\{${index}\\}`, "g"), String(arg));
-  });
-
-  // 如果参数是对象，尝试替换属性占位符 #{id}, #{name} 等
-  if (args.length > 0 && typeof args[0] === "object") {
-    const firstArg = args[0];
-    Object.keys(firstArg).forEach((key) => {
-      cacheKey = cacheKey.replace(new RegExp(`#\\{${key}\\}`, "g"), String(firstArg[key]));
-    });
-  }
-
-  return cacheKey;
-}

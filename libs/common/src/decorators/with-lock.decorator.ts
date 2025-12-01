@@ -1,6 +1,7 @@
 import { Logger } from "@nestjs/common";
 import type { Redis } from "ioredis";
 
+import { generateKey } from "../common.utils";
 import { AppError } from "../errors/app.error";
 import { LockErrorCode } from "../errors/lock.error-code";
 
@@ -12,12 +13,15 @@ const REDIS_INSTANCE_KEY = Symbol("REDIS_INSTANCE");
 export interface WithLockOptions {
   /**
    * 锁的键名，支持占位符
-   * - #{0}, #{1}, #{2} 表示参数位置
-   * - #{propertyName} 表示对象属性
+   * - 会自动添加 `lock:` 前缀（如果 key 已以 `lock:` 开头则不会重复添加）
+   * - #{3}：索引直接取值
+   * - #{1.book.title}：按路径读取属性
+   * - #{user.id}：等同于 #{0.user.id}，0 可以省略
    *
    * @example
-   * 'lock:user:#{0}' - 使用第一个参数
-   * 'lock:order:#{id}' - 使用第一个参数对象的 id 属性
+   * 'user:#{0}' - 会自动变成 'lock:user:#{0}'
+   * 'order:#{id}' - 会自动变成 'lock:order:#{id}'
+   * 'lock:payment:#{0}' - 保持原样，不会重复添加前缀
    */
   key: string;
 
@@ -63,7 +67,7 @@ export interface WithLockOptions {
  * @Injectable()
  * export class OrderService {
  *   @WithLock({
- *     key: 'lock:order:create:#{userId}',
+ *     key: 'order:create:#{0}', // 会自动添加 'lock:' 前缀，最终为 'lock:order:create:#{0}'
  *     ttl: 10000,
  *     waitTimeout: 3000
  *   })
@@ -73,7 +77,7 @@ export interface WithLockOptions {
  *   }
  *
  *   @WithLock({
- *     key: 'lock:payment:#{orderId}',
+ *     key: 'lock:payment:#{0}', // 已包含 'lock:' 前缀，不会重复添加
  *     ttl: 30000,
  *     waitTimeout: 0, // 不等待，立即失败
  *     errorMessage: '订单正在支付中，请勿重复提交'
@@ -110,7 +114,8 @@ export function WithLock(options: WithLockOptions): MethodDecorator {
         throw new AppError(LockErrorCode.REDIS_NOT_INJECTED);
       }
 
-      const lockKey = generateLockKey(options.key, args);
+      const generatedKey = generateKey(options.key, args);
+      const lockKey = generatedKey.startsWith("lock:") ? generatedKey : `lock:${generatedKey}`;
       const ttl = options.ttl || 30000; // 默认 30 秒
       const waitTimeout = options.waitTimeout ?? 5000; // 默认等待 5 秒
       const retryInterval = options.retryInterval || 100; // 默认 100ms 重试一次
@@ -227,29 +232,6 @@ export function injectRedisForLock(instance: any, redis: Redis) {
   Reflect.defineMetadata(REDIS_INSTANCE_KEY, redis, instance);
 }
 
-/**
- * 生成锁键名
- * 支持占位符：#{0}, #{1} 等表示参数位置，#{propertyName} 表示对象属性
- */
-// biome-ignore lint/suspicious/noExplicitAny: generic lock key generation
-function generateLockKey(pattern: string, args: any[]): string {
-  let lockKey = pattern;
-
-  // 替换参数占位符 #{0}, #{1}, #{2} ...
-  args.forEach((arg, index) => {
-    lockKey = lockKey.replace(new RegExp(`#\\{${index}\\}`, "g"), String(arg));
-  });
-
-  // 如果参数是对象，尝试替换属性占位符 #{id}, #{name} 等
-  if (args.length > 0 && typeof args[0] === "object") {
-    const firstArg = args[0];
-    Object.keys(firstArg).forEach((key) => {
-      lockKey = lockKey.replace(new RegExp(`#\\{${key}\\}`, "g"), String(firstArg[key]));
-    });
-  }
-
-  return lockKey;
-}
 
 /**
  * 睡眠函数
