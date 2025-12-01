@@ -1,7 +1,7 @@
-// utils
-
+// others
 export { toast } from "sonner";
 
+// shadcn/ui
 export {
   InputOTP,
   InputOTPGroup,
@@ -94,7 +94,7 @@ export {
 } from "./components/ui/table";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 export { Textarea } from "./components/ui/textarea";
-// extend
+// advanced components
 export type { ActionProps } from "./components/uix/action";
 export { Action } from "./components/uix/action";
 export type { AlertProps } from "./components/uix/alert";
@@ -174,6 +174,7 @@ export { Uploader } from "./components/uix/uploader";
 export type { HandleProps, UploadFile } from "./components/uix/uploader/type";
 export type { ValueFormatterProps } from "./components/uix/value-formatter";
 export { register, ValueFormatter } from "./components/uix/value-formatter";
-// hooks
+// custom hooks
 export * from "./hooks";
+// utils
 export * from "./lib";

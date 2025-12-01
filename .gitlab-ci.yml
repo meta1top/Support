@@ -5,15 +5,6 @@
 variables:
   NPM_REGISTRY: "registry.npmjs.org"
 
-# 定义缓存策略
-cache:
-  key:
-    files:
-      - pnpm-lock.yaml
-  paths:
-    - .pnpm-store
-  policy: pull-push
-
 # 定义阶段
 stages:
   - publish
