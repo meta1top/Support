@@ -45,9 +45,11 @@ export function Transactional() {
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
+      // 保存原始 repository，确保在 finally 中恢复
+      const originalRepository = this.repository;
+
       try {
         // 临时替换 repository 为事务中的 repository
-        const originalRepository = this.repository;
         this.repository = queryRunner.manager.getRepository(originalRepository.target);
 
         // 执行原始方法
@@ -56,15 +58,14 @@ export function Transactional() {
         // 提交事务
         await queryRunner.commitTransaction();
 
-        // 恢复原始 repository
-        this.repository = originalRepository;
-
         return result;
       } catch (error) {
         // 回滚事务
         await queryRunner.rollbackTransaction();
         throw error;
       } finally {
+        // 确保恢复原始 repository（无论成功还是失败）
+        this.repository = originalRepository;
         // 释放 QueryRunner
         await queryRunner.release();
       }
