@@ -13,6 +13,40 @@ import {
 } from "./config-loader.types";
 
 /**
+ * 将 kebab-case 字符串转换为 camelCase
+ */
+function kebabToCamel(str: string): string {
+  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+/**
+ * 递归转换对象的所有键名从 kebab-case 到 camelCase
+ */
+// biome-ignore lint/suspicious/noExplicitAny: generic config transformation
+function transformKeys(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => transformKeys(item));
+  }
+
+  if (typeof obj === "object" && obj.constructor === Object) {
+    const transformed: Record<string, unknown> = {};
+    for (const key in obj) {
+      if (Object.hasOwn(obj, key)) {
+        const camelKey = kebabToCamel(key);
+        transformed[camelKey] = transformKeys(obj[key]);
+      }
+    }
+    return transformed;
+  }
+
+  return obj;
+}
+
+/**
  * 配置加载器（工具类）
  *
  * 支持从本地 YAML 文件或 Nacos 配置中心加载配置
@@ -147,10 +181,16 @@ export class ConfigLoader<T = Record<string, unknown>> {
       if (parsed === null || parsed === undefined) {
         throw new Error("解析的配置内容为空");
       }
-      return parsed as T;
+      const transformed = transformKeys(parsed);
+      return transformed as T;
     } catch (error) {
       this.logger.error("解析 YAML 失败", error);
       throw new Error(`YAML 解析错误: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 }
+
+/**
+ * 导出工具函数供其他地方使用
+ */
+export { transformKeys, kebabToCamel };
