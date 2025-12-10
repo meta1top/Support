@@ -4,8 +4,6 @@
 # 定义全局变量
 variables:
   NPM_REGISTRY: "registry.npmjs.org"
-  # pnpm 配置
-  PNPM_HOME: "/home/gitlab-runner/.local/share/pnpm"
 
 # 全局缓存配置
 cache:
