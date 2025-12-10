@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 
 import { AppError, ErrorCode as CommonErrorCode } from "@meta-1/nest-common";
 import { StorageProvider } from "@meta-1/nest-types";
@@ -11,14 +11,14 @@ import {
 } from "./dto";
 import { OSSService } from "./oss";
 import { S3Service } from "./s3";
-import { type AssetsConfig, ErrorCode as AssetsErrorCode } from "./shared";
+import { ErrorCode as AssetsErrorCode } from "./shared";
 
 /**
  * 资源服务
  * 提供统一的资源管理接口，内部根据配置选择 S3 或 OSS
  */
 @Injectable()
-export class AssetsService {
+export class AssetsService implements OnModuleInit {
   private readonly logger = new Logger(AssetsService.name);
 
   constructor(
@@ -27,10 +27,8 @@ export class AssetsService {
     private readonly ossService: OSSService,
   ) {}
 
-  /**
-   * 刷新配置
-   */
-  refresh(config: AssetsConfig) {
+  onModuleInit() {
+    const config = this.assetsConfigService.get();
     const { storage, s3, oss } = config;
     const expiresIn = storage.expiresIn || "30m"; // 默认 30 分钟
 
@@ -39,13 +37,13 @@ export class AssetsService {
         throw new AppError(CommonErrorCode.CONFIG_INVALID);
       }
       this.s3Service.initialize(s3, storage.publicBucket, storage.privateBucket, expiresIn);
-      this.logger.log("已切换到 S3 存储");
+      this.logger.log("已初始化 S3 存储");
     } else if (storage.provider === StorageProvider.OSS) {
       if (!oss) {
         throw new AppError(CommonErrorCode.CONFIG_INVALID);
       }
       this.ossService.initialize(oss, storage.publicBucket, storage.privateBucket, expiresIn);
-      this.logger.log("已切换到 OSS 存储");
+      this.logger.log("已初始化 OSS 存储");
     } else {
       throw new AppError(AssetsErrorCode.PROVIDER_NOT_SUPPORTED);
     }

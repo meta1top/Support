@@ -30,9 +30,9 @@ npm install @nestjs/common @nestjs-modules/ioredis ioredis
 
 ## 🚀 使用
 
-### 1. 会话管理
+### 1. 模块配置
 
-#### 模块导入
+#### 直接配置
 
 ```typescript
 import { Module } from '@nestjs/common';
@@ -41,19 +41,72 @@ import { SecurityModule } from '@meta-1/nest-security';
 @Module({
   imports: [
     SecurityModule.forRoot({
-      redis: {
-        host: 'localhost',
-        port: 6379,
-      },
       jwt: {
-        secret: 'your-secret-key',
-        expiresIn: '7d',
+        secret: 'your-jwt-secret-key',
+        expiresIn: '7d'
       },
-    }),
-  ],
+      otp: {
+        issuer: 'YourApp',
+        debug: false,
+        code: 123456,
+        expiresIn: '5m'
+      }
+    })
+  ]
 })
 export class AppModule {}
 ```
+
+#### 从配置文件加载
+
+```typescript
+// main.ts
+import { NestFactory } from '@nestjs/core';
+import { ConfigLoader, ConfigSourceType } from '@meta-1/nest-common';
+
+interface AppConfig {
+  security: SecurityConfig;
+}
+
+async function bootstrap() {
+  // 加载配置
+  const loader = new ConfigLoader<AppConfig>({
+    type: ConfigSourceType.LOCAL_YAML,
+    filePath: './config/app.yaml'
+  });
+  
+  const config = await loader.load();
+  
+  // 创建模块
+  @Module({
+    imports: [SecurityModule.forRoot(config.security)]
+  })
+  class AppModule {}
+  
+  const app = await NestFactory.create(AppModule);
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+配置文件示例 (`config/app.yaml`):
+
+```yaml
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiresIn: 7d
+  otp:
+    issuer: YourApp
+    debug: false
+    code: 123456
+    expiresIn: 5m
+    secretSize: 32
+    windowSize: 1
+    secondPerSize: 30
+```
+
+### 2. 会话管理
 
 #### 会话服务使用
 
@@ -265,32 +318,23 @@ export class AuthController {
 ### SecurityModule 配置
 
 ```typescript
-interface SecurityModuleOptions {
-  // Redis 配置
-  redis: {
-    host: string;
-    port: number;
-    password?: string;
-    db?: number;
-  };
-  
+interface SecurityConfig {
   // JWT 配置
   jwt: {
-    secret: string;
-    expiresIn?: string | number;
+    secret: string;              // JWT 密钥
+    expiresIn?: string;          // 过期时间，如 '7d', '24h', '30m'
   };
   
-  // OTP 配置（可选）
-  otp?: {
-    length?: number;        // OTP 长度，默认 6
-    expiresIn?: number;     // 过期时间（秒），默认 300
-    numeric?: boolean;      // 是否只包含数字，默认 true
-  };
-  
-  // 会话配置（可选）
-  session?: {
-    prefix?: string;        // Redis key 前缀，默认 'session'
-    expiresIn?: number;     // 默认过期时间（毫秒）
+  // OTP 配置
+  otp: {
+    issuer: string;              // 发行者名称（必需）
+    debug: boolean;              // 调试模式
+    code: number;                // 调试模式下的固定验证码
+    expiresIn: string;           // 密钥缓存过期时间，如 '5m'
+    secretSize?: number;         // 密钥大小，默认 32
+    windowSize?: number;         // 窗口大小（时间偏移），默认 1
+    secondPerSize?: number;      // 每个窗口的秒数，默认 30
+    randomNumberAlgorithm?: string;  // 随机数算法，默认 SHA1PRNG
   };
 }
 ```

@@ -1,2 +1,4 @@
-export const AI_CONFIG = "AI_CONFIG";
-export const AI_CONFIG_KEY = "ai";
+/**
+ * AI 模块选项注入令牌
+ */
+export const AI_MODULE_OPTIONS = "AI_MODULE_OPTIONS";

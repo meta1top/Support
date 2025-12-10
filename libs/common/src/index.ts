@@ -1,6 +1,7 @@
 export * from "./cache";
 export * from "./common.module";
 export * from "./common.utils";
+export * from "./config";
 export * from "./decorators";
 export * from "./dto/page.dto";
 export * from "./errors";

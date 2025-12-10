@@ -1,32 +1,19 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Inject, Injectable } from "@nestjs/common";
 
-import { AppError, ErrorCode } from "@meta-1/nest-common";
-import { MESSAGE_CONFIG, type MessageConfig } from "../shared";
+import { MESSAGE_MODULE_OPTIONS, type MessageConfig } from "../shared";
 
 /**
  * 消息配置服务
- * 用于读取和保存 MessageModule 的配置
+ * 用于读取 MessageModule 的配置
  */
 @Injectable()
 export class MessageConfigService {
-  constructor(private readonly configService: ConfigService) {}
-
-  /**
-   * 保存配置
-   */
-  set(config: MessageConfig) {
-    this.configService.set(MESSAGE_CONFIG, config);
-  }
+  constructor(@Inject(MESSAGE_MODULE_OPTIONS) private readonly config: MessageConfig) {}
 
   /**
    * 获取当前配置
    */
-  get<T = MessageConfig>(): T {
-    const config = this.configService.get<T>(MESSAGE_CONFIG);
-    if (!config) {
-      throw new AppError(ErrorCode.CONFIG_NOT_FOUND);
-    }
-    return config;
+  get(): MessageConfig {
+    return this.config;
   }
 }

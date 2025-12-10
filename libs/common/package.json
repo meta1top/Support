@@ -1,6 +1,6 @@
 {
   "name": "@meta-1/nest-common",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "Common utilities and decorators for NestJS applications including caching, distributed lock, i18n, error handling, and more",
   "author": "",
   "license": "MIT",
@@ -33,7 +33,9 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "nestjs-i18n": "^10.5.0",
-    "ioredis": "^5.8.0"
+    "ioredis": "^5.8.0",
+    "nacos": "2.6.0",
+    "yaml": "2.8.1"
   },
   "dependencies": {
     "chokidar": "4.0.3",

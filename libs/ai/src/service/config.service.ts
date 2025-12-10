@@ -1,33 +1,20 @@
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Inject, Injectable } from "@nestjs/common";
 
-import { AppError } from "@meta-1/nest-common";
-import { AiConfig } from "@meta-1/nest-types";
-import { AI_CONFIG, ErrorCode } from "../shared";
+import type { AiConfig } from "@meta-1/nest-types";
+import { AI_MODULE_OPTIONS } from "../shared";
 
 /**
  * AI 配置服务
- * 用于读取和保存 AI 模块的配置
+ * 用于读取 AI 模块的配置
  */
 @Injectable()
 export class AiConfigService {
-  constructor(private readonly configService: ConfigService) {}
-
-  /**
-   * 保存配置
-   */
-  set(config: AiConfig) {
-    this.configService.set(AI_CONFIG, config);
-  }
+  constructor(@Inject(AI_MODULE_OPTIONS) private readonly config: AiConfig) {}
 
   /**
    * 获取当前配置
    */
   get(): AiConfig {
-    const config = this.configService.get<AiConfig>(AI_CONFIG);
-    if (!config) {
-      throw new AppError(ErrorCode.AI_CONFIG_NOT_FOUND);
-    }
-    return config;
+    return this.config;
   }
 }

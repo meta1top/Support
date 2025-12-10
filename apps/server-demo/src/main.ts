@@ -1,20 +1,34 @@
+import { existsSync } from "node:fs";
 import * as path from "node:path";
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { config } from "dotenv";
 
-import { syncLocales } from "@meta-1/nest-common";
-import { loadNacosConfig } from "@meta-1/nest-nacos";
+import { ConfigLoader, ConfigSourceType, syncLocales } from "@meta-1/nest-common";
 import { AppModule } from "./app.module";
 import type { AppConfig } from "./shared";
 import { setupSwagger } from "./shared";
 
-// 在最开始加载环境变量
+const nodeEnv = process.env.NODE_ENV;
+const devEnvPath = path.join(process.cwd(), "apps/server-demo/.env");
+const hasDevEnvFile = existsSync(devEnvPath);
+const isDevelopment = nodeEnv === "development" || (!nodeEnv && hasDevEnvFile);
+
+const envPath = isDevelopment ? devEnvPath : path.join(process.cwd(), ".env");
 config({
-  path: path.join(process.cwd(), "apps/server-demo/.env"),
+  path: envPath,
 });
 
 async function bootstrap() {
+  const loader = new ConfigLoader<AppConfig>({
+    type: ConfigSourceType.NACOS,
+    server: process.env.NACOS_SERVER!,
+    dataId: process.env.APP_NAME!,
+  });
+  const config = await loader.load();
+  if (!config) {
+    throw new Error("Failed to load configuration");
+  }
   const logger = new Logger("Main");
   // 同步 locales 文件（启动时同步 + 开发模式下监听）
   const isDevelopment = process.env.NODE_ENV === "development";
@@ -24,11 +38,7 @@ async function bootstrap() {
     targetDir: path.join(process.cwd(), "dist/apps/server-demo/i18n"),
     watch: isDevelopment,
   });
-  const nacosConfig = await loadNacosConfig<AppConfig>();
-  if (!nacosConfig) {
-    logger.warn("Starting application without Nacos configuration");
-  }
-  const app = await NestFactory.create(AppModule.forRoot(nacosConfig));
+  const app = await NestFactory.create(AppModule.forRoot(config));
   app.enableCors({
     origin: true,
     credentials: true,

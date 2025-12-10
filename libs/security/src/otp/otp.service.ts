@@ -5,7 +5,7 @@ import Redis from "ioredis";
 import ms from "ms";
 
 import { SecurityConfigService } from "../config/security.config.service";
-import type { OTPConfig, SecurityConfig } from "../shared";
+import type { OTPConfig } from "../shared";
 
 /**
  * Base32编码表
@@ -82,7 +82,7 @@ export class OTPService {
    * 获取OTP配置，并应用默认值
    */
   private get config(): Required<OTPConfig> {
-    const securityConfig = this.securityConfigService.get<SecurityConfig>();
+    const securityConfig = this.securityConfigService.get();
     const otpConfig = securityConfig.otp;
 
     // 应用默认值（与Java版本保持一致）

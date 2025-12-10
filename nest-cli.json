@@ -51,16 +51,6 @@
         "webpack": false
       }
     },
-    "nacos": {
-      "type": "library",
-      "root": "libs/nacos",
-      "entryFile": "index",
-      "sourceRoot": "libs/nacos/src",
-      "compilerOptions": {
-        "tsConfigPath": "libs/nacos/tsconfig.lib.json",
-        "webpack": false
-      }
-    },
     "security": {
       "type": "library",
       "root": "libs/security",

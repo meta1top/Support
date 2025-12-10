@@ -1,9 +1,4 @@
 /**
- * Assets 配置在 Nacos 中的键名
+ * Assets 模块选项注入令牌
  */
-export const ASSETS_CONFIG_KEY = "assets";
-
-/**
- * Assets 配置在 ConfigService 中的键名
- */
-export const ASSETS_CONFIG = "ASSETS_CONFIG";
+export const ASSETS_MODULE_OPTIONS = "ASSETS_MODULE_OPTIONS";

@@ -1,3 +1,4 @@
-export const SECURITY_CONFIG = "SECURITY_CONFIG";
-
-export const SECURITY_CONFIG_KEY = "security";
+/**
+ * Security 模块选项注入令牌
+ */
+export const SECURITY_MODULE_OPTIONS = "SECURITY_MODULE_OPTIONS";

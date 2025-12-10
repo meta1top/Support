@@ -21,42 +21,96 @@ npm install @meta-1/nest-assets
 
 ## 使用方法
 
-### 1. 导入模块
+### 1. 导入并配置模块
 
 ```typescript
 import { Module } from '@nestjs/common';
 import { AssetsModule } from '@meta-1/nest-assets';
+import { StorageProvider } from '@meta-1/nest-types';
 
 @Module({
-  imports: [AssetsModule],
+  imports: [
+    // 使用 S3
+    AssetsModule.forRoot({
+      storage: {
+        provider: StorageProvider.S3,
+        publicBucket: 'my-public-bucket',
+        privateBucket: 'my-private-bucket',
+        expiresIn: '30m'  // 支持字符串（如 '30m', '1h', '2d'）或数字（毫秒）
+      },
+      s3: {
+        region: 'us-east-1',
+        accessKeyId: 'your-access-key-id',
+        secretAccessKey: 'your-secret-access-key',
+        endpoint: 'https://s3.amazonaws.com'  // 可选，用于兼容 S3 的服务
+      }
+    }),
+    
+    // 或使用阿里云 OSS
+    AssetsModule.forRoot({
+      storage: {
+        provider: StorageProvider.OSS,
+        publicBucket: 'my-public-bucket',
+        privateBucket: 'my-private-bucket',
+        expiresIn: '30m'
+      },
+      oss: {
+        region: 'oss-cn-hangzhou',
+        accessKeyId: 'your-access-key-id',
+        accessKeySecret: 'your-secret-access-key'
+      }
+    })
+  ]
 })
 export class AppModule {}
 ```
 
-### 2. Nacos 配置
+### 2. 从配置文件加载
 
-在 Nacos 配置中心添加 `assets` 配置：
+```typescript
+// main.ts
+import { NestFactory } from '@nestjs/core';
+import { ConfigLoader, ConfigSourceType } from '@meta-1/nest-common';
+
+interface AppConfig {
+  assets: AssetsConfig;
+}
+
+async function bootstrap() {
+  // 加载配置
+  const loader = new ConfigLoader<AppConfig>({
+    type: ConfigSourceType.LOCAL_YAML,
+    filePath: './config/app.yaml'
+  });
+  
+  const config = await loader.load();
+  
+  // 创建模块
+  @Module({
+    imports: [AssetsModule.forRoot(config.assets)]
+  })
+  class AppModule {}
+  
+  const app = await NestFactory.create(AppModule);
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+配置文件示例 (`config/app.yaml`):
 
 ```yaml
 assets:
   storage:
-    # 默认存储提供商: 's3' | 'oss'
-    provider: s3
-    # 公共存储桶名称（用于存储可公开访问的文件）
-    publicBucket: ${PUBLIC_BUCKET}
-    # 私有存储桶名称（用于存储需要权限访问的文件）
-    privateBucket: ${PRIVATE_BUCKET}
-    # 签名有效期，支持字符串（如 '30m', '1h', '2d'）或数字（毫秒），默认 '30m'
+    provider: s3  # 's3' | 'oss'
+    publicBucket: my-public-bucket
+    privateBucket: my-private-bucket
     expiresIn: 30m
-  
-  # S3 配置
   s3:
     region: us-east-1
     accessKeyId: ${AWS_ACCESS_KEY_ID}
     secretAccessKey: ${AWS_SECRET_ACCESS_KEY}
-    endpoint: ${AWS_S3_ENDPOINT}  # 可选，用于兼容 S3 的服务
-  
-  # OSS 配置
+    endpoint: ${AWS_S3_ENDPOINT}  # 可选
   oss:
     region: oss-cn-hangzhou
     accessKeyId: ${ALIYUN_ACCESS_KEY_ID}

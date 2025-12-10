@@ -1,33 +1,81 @@
-import { Global, Module, OnModuleInit } from "@nestjs/common";
-import { get } from "lodash";
+import { DynamicModule, Module } from "@nestjs/common";
 
-import { NacosConfigService } from "@meta-1/nest-nacos";
 import { AssetsService } from "./assets.service";
 import { AssetsConfigService } from "./config";
 import { OSSService } from "./oss";
 import { S3Service } from "./s3";
-import { ASSETS_CONFIG_KEY, type AssetsConfig } from "./shared";
+import { ASSETS_MODULE_OPTIONS, type AssetsConfig } from "./shared";
 
-@Global()
-@Module({
-  providers: [AssetsConfigService, S3Service, OSSService, AssetsService],
-  exports: [AssetsService, AssetsConfigService],
-})
-export class AssetsModule implements OnModuleInit {
-  constructor(
-    private readonly nacosConfigService: NacosConfigService,
-    private readonly assetsConfigService: AssetsConfigService,
-    private readonly assetsService: AssetsService,
-  ) {}
-
-  onModuleInit() {
-    this.nacosConfigService.subscribe<unknown>((config) => {
-      const assetsConfig = get(config, ASSETS_CONFIG_KEY);
-      if (assetsConfig) {
-        const config = assetsConfig as AssetsConfig;
-        this.assetsConfigService.set(config);
-        this.assetsService.refresh(config);
-      }
-    });
+@Module({})
+export class AssetsModule {
+  /**
+   * 创建 Assets 模块
+   *
+   * @param config 资源配置
+   * @param global 是否为全局模块，默认为 true
+   * @returns DynamicModule
+   *
+   * @example
+   * ```typescript
+   * // 在 AppModule 中导入 - S3 配置
+   * @Module({
+   *   imports: [
+   *     AssetsModule.forRoot({
+   *       storage: {
+   *         provider: StorageProvider.S3,
+   *         publicBucket: 'my-public-bucket',
+   *         privateBucket: 'my-private-bucket',
+   *         expiresIn: '30m'
+   *       },
+   *       s3: {
+   *         region: 'us-east-1',
+   *         accessKeyId: 'your-access-key',
+   *         secretAccessKey: 'your-secret-key'
+   *       }
+   *     })
+   *   ]
+   * })
+   * export class AppModule {}
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // 在 AppModule 中导入 - OSS 配置
+   * @Module({
+   *   imports: [
+   *     AssetsModule.forRoot({
+   *       storage: {
+   *         provider: StorageProvider.OSS,
+   *         publicBucket: 'my-public-bucket',
+   *         privateBucket: 'my-private-bucket',
+   *         expiresIn: '30m'
+   *       },
+   *       oss: {
+   *         region: 'oss-cn-hangzhou',
+   *         accessKeyId: 'your-access-key',
+   *         accessKeySecret: 'your-secret-key'
+   *       }
+   *     })
+   *   ]
+   * })
+   * export class AppModule {}
+   * ```
+   */
+  static forRoot(config: AssetsConfig, global = true): DynamicModule {
+    return {
+      global,
+      module: AssetsModule,
+      providers: [
+        {
+          provide: ASSETS_MODULE_OPTIONS,
+          useValue: config,
+        },
+        AssetsConfigService,
+        S3Service,
+        OSSService,
+        AssetsService,
+      ],
+      exports: [AssetsConfigService, AssetsService],
+    };
   }
 }

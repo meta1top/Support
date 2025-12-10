@@ -30,12 +30,8 @@ export class MailService implements OnModuleInit {
   constructor(private readonly messageConfigService: MessageConfigService) {}
 
   onModuleInit() {
-    try {
-      const config = this.messageConfigService.get();
-      this.initializeClient(config);
-    } catch {
-      this.logger.warn("Message config not found, skipping mail client initialization");
-    }
+    const config = this.messageConfigService.get();
+    this.initializeClient(config);
   }
 
   /**
@@ -89,29 +85,6 @@ export class MailService implements OnModuleInit {
     } else {
       this.logger.warn("MailService not configured or configuration incomplete");
     }
-  }
-
-  /**
-   * 刷新配置并重新初始化客户端
-   * @param config 新的消息配置
-   */
-  async refresh(config: MessageConfig): Promise<void> {
-    this.logger.log("Refreshing MailService configuration...");
-
-    // 清理旧的客户端实例
-    if (this.sesClient) {
-      // AWS SES 客户端会自动处理清理
-      this.sesClient = null;
-    }
-    if (this.dmClient) {
-      // 阿里云 DM 客户端会自动处理清理
-      this.dmClient = null;
-    }
-
-    // 重新初始化
-    this.initializeClient(config);
-
-    this.logger.log("MailService configuration refreshed successfully");
   }
 
   /**

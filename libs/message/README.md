@@ -20,6 +20,49 @@ yarn add @meta-1/nest-message
 
 ## 🚀 Usage
 
+### Module Setup
+
+First, import and configure the `MessageModule` in your application module:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { MessageModule } from '@meta-1/nest-message';
+
+@Module({
+  imports: [
+    // Using AWS SES
+    MessageModule.forRoot({
+      debug: false,
+      mail: {
+        type: 'aws-ses',
+        ses: {
+          accessKeyId: 'your-access-key-id',
+          accessKeySecret: 'your-secret-access-key',
+          region: 'us-east-1',
+          fromEmail: 'noreply@example.com'
+        }
+      }
+    }),
+    
+    // Or using Aliyun DirectMail
+    MessageModule.forRoot({
+      debug: false,
+      mail: {
+        type: 'alc-dm',
+        dm: {
+          accessKeyId: 'your-access-key-id',
+          accessKeySecret: 'your-secret-access-key',
+          region: 'cn-hangzhou',
+          fromEmail: 'noreply@example.com',
+          fromAlias: 'My Application'
+        }
+      }
+    })
+  ]
+})
+export class AppModule {}
+```
+
 ### Email Service
 
 ```typescript

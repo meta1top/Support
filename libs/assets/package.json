@@ -1,6 +1,6 @@
 {
   "name": "@meta-1/nest-assets",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "NestJS assets module for S3 and OSS object storage",
   "author": "",
   "license": "MIT",
