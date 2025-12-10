@@ -6,16 +6,13 @@ variables:
   NPM_REGISTRY: "registry.npmjs.org"
 
 # 全局缓存配置
+# 只缓存 pnpm store，node_modules 通过 pnpm install 快速重建链接
 cache:
   key:
     files:
       - pnpm-lock.yaml
   paths:
     - .pnpm-store
-    - node_modules
-    - apps/*/node_modules
-    - libs/*/node_modules
-    - packages/*/node_modules
   policy: pull-push
 
 # 定义阶段
