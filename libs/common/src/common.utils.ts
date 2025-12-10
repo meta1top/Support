@@ -1,9 +1,44 @@
 import { createHash } from "node:crypto";
 import { get } from "lodash";
+import type { LogLevel, QueryRunner, Logger as TypeOrmLogger } from "typeorm";
 
 export const md5 = (text: string): string => {
   return createHash("md5").update(text).digest("hex");
 };
+
+/**
+ * TypeORM 纯文本日志输出器
+ * 用于生产环境，输出无颜色的纯文本日志，便于日志收集和查看
+ */
+export class PlainTextLogger implements TypeOrmLogger {
+  logQuery(query: string, parameters?: unknown[], _queryRunner?: QueryRunner) {
+    const params = parameters?.length ? ` -- PARAMETERS: ${JSON.stringify(parameters)}` : "";
+    console.log(`[QUERY]: ${query}${params}`);
+  }
+
+  logQueryError(error: string | Error, query: string, parameters?: unknown[], _queryRunner?: QueryRunner) {
+    const params = parameters?.length ? ` -- PARAMETERS: ${JSON.stringify(parameters)}` : "";
+    const errorMsg = error instanceof Error ? error.message : error;
+    console.error(`[QUERY ERROR]: ${errorMsg} -- QUERY: ${query}${params}`);
+  }
+
+  logQuerySlow(time: number, query: string, parameters?: unknown[], _queryRunner?: QueryRunner) {
+    const params = parameters?.length ? ` -- PARAMETERS: ${JSON.stringify(parameters)}` : "";
+    console.warn(`[SLOW QUERY]: Execution time: ${time}ms -- QUERY: ${query}${params}`);
+  }
+
+  logSchemaBuild(message: string, _queryRunner?: QueryRunner) {
+    console.log(`[SCHEMA]: ${message}`);
+  }
+
+  logMigration(message: string, _queryRunner?: QueryRunner) {
+    console.log(`[MIGRATION]: ${message}`);
+  }
+
+  log(level: LogLevel, message: unknown, _queryRunner?: QueryRunner) {
+    console.log(`[TYPEORM ${level.toUpperCase()}]: ${message}`);
+  }
+}
 
 /**
  * 生成动态键名
