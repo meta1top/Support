@@ -15,12 +15,23 @@ import { SecurityModule } from "@meta-1/nest-security";
 import { AppController, AssetsController, MailCodeController, TestLockController } from "./controller";
 import { TestLockService } from "./service";
 import { AppConfig } from "./shared";
+import { getI18nCollector, initI18nCollector } from "./utils/i18n-collector";
 
 @Module({})
 export class AppModule {
   static forRoot(preloadedConfig: AppConfig | null): DynamicModule {
     const logger = new Logger(AppModule.name);
     const i18nPath = path.join(__dirname, "i18n");
+    const isDevelopment = process.env.NODE_ENV === "development";
+
+    if (isDevelopment) {
+      // 开发环境下初始化 I18n 缺失键收集器
+      // locales 目录在项目根目录
+      const localesDir = path.join(process.cwd(), "locales");
+      initI18nCollector(localesDir);
+      logger.log("I18n 缺失键收集器已启动");
+    }
+
     const imports: DynamicModule["imports"] = [
       DiscoveryModule,
       ConfigModule.forRoot({
@@ -32,14 +43,32 @@ export class AppModule {
         loader: I18nJsonLoader,
         loaderOptions: {
           path: i18nPath,
-          watch: process.env.NODE_ENV === "development",
+          watch: isDevelopment,
         },
-        logging: true,
+        logging: isDevelopment,
         resolvers: [
           { use: QueryResolver, options: ["lang"] },
           new HeaderResolver(["x-lang"]),
           new AcceptLanguageResolver(),
         ],
+        // 开发环境下启用缺失翻译的监听
+        ...(isDevelopment && {
+          missingKeyHandler: (key: string) => {
+            const collector = getI18nCollector();
+            if (collector) {
+              // key 格式: "common.用户不存在" 或 "用户不存在"
+              // 拆分 namespace 和实际 key
+              if (key.includes(".")) {
+                const parts = key.split(".");
+                const namespace = parts[0];
+                const actualKey = parts.slice(1).join(".");
+                collector.add(namespace, actualKey);
+              } else {
+                collector.add("common", key);
+              }
+            }
+          },
+        }),
       }),
       CommonModule,
     ];
