@@ -18,6 +18,10 @@ const pendingErrorCodes: ErrorCodeDefinition[] = [];
 function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T): Readonly<T> {
   // 记录已采集的 message,避免重复采集
   const collectedMessages = new Set<string>();
+  
+  // 为每个错误代码预创建代理对象,避免重复创建
+  // biome-ignore lint/suspicious/noExplicitAny: <errorCodeProxies>
+  const errorCodeProxies = new Map<string, any>();
 
   const proxy = new Proxy(definition, {
     get(target, prop: string) {
@@ -27,8 +31,13 @@ function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T): Rea
         return errorCode;
       }
 
+      if (errorCodeProxies.has(prop)) {
+        // 如果已经创建过代理,直接返回
+        return errorCodeProxies.get(prop);
+      }
+
       // 为每个错误代码创建代理,拦截 message 访问
-      return new Proxy(errorCode, {
+      const errorCodeProxy = new Proxy(errorCode, {
         get(errorTarget, errorProp: string) {
           const value = errorTarget[errorProp as keyof typeof errorTarget];
 
@@ -45,7 +54,21 @@ function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T): Rea
 
           return value;
         },
+        // 添加完整的代理陷阱以避免只读属性冲突
+        getOwnPropertyDescriptor(errorTarget, errorProp: string) {
+          const descriptor = Object.getOwnPropertyDescriptor(errorTarget, errorProp);
+          if (descriptor) {
+            return {
+              ...descriptor,
+              configurable: true,
+            };
+          }
+          return descriptor;
+        },
       });
+
+      errorCodeProxies.set(prop, errorCodeProxy);
+      return errorCodeProxy;
     },
   });
 
