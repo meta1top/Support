@@ -12,67 +12,17 @@ export type ErrorCodeDefinition = Record<string, { code: number; message: string
 const pendingErrorCodes: ErrorCodeDefinition[] = [];
 
 /**
- * 错误代码代理处理器
- * 在访问时自动采集 i18n key
+ * 采集单个错误码定义的 i18n key
  */
-function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T): Readonly<T> {
-  // 记录已采集的 message,避免重复采集
-  const collectedMessages = new Set<string>();
-  
-  // 为每个错误代码预创建代理对象,避免重复创建
-  // biome-ignore lint/suspicious/noExplicitAny: <errorCodeProxies>
-  const errorCodeProxies = new Map<string, any>();
+function collectErrorCodeDefinition<T extends ErrorCodeDefinition>(definition: T): void {
+  const collector = getI18nCollector();
+  if (!collector) {
+    return;
+  }
 
-  const proxy = new Proxy(definition, {
-    get(target, prop: string) {
-      const errorCode = target[prop];
-
-      if (!errorCode || typeof errorCode !== "object") {
-        return errorCode;
-      }
-
-      if (errorCodeProxies.has(prop)) {
-        // 如果已经创建过代理,直接返回
-        return errorCodeProxies.get(prop);
-      }
-
-      // 为每个错误代码创建代理,拦截 message 访问
-      const errorCodeProxy = new Proxy(errorCode, {
-        get(errorTarget, errorProp: string) {
-          const value = errorTarget[errorProp as keyof typeof errorTarget];
-
-          // 当访问 message 时,自动采集 i18n key
-          if (errorProp === "message" && typeof value === "string" && !collectedMessages.has(value)) {
-            const collector = getI18nCollector();
-
-            if (collector) {
-              // 使用 message 的值作为 i18n key
-              collector.add(value);
-              collectedMessages.add(value);
-            }
-          }
-
-          return value;
-        },
-        // 添加完整的代理陷阱以避免只读属性冲突
-        getOwnPropertyDescriptor(errorTarget, errorProp: string) {
-          const descriptor = Object.getOwnPropertyDescriptor(errorTarget, errorProp);
-          if (descriptor) {
-            return {
-              ...descriptor,
-              configurable: true,
-            };
-          }
-          return descriptor;
-        },
-      });
-
-      errorCodeProxies.set(prop, errorCodeProxy);
-      return errorCodeProxy;
-    },
-  });
-
-  return Object.freeze(proxy) as Readonly<T>;
+  for (const errorCode of Object.values(definition)) {
+    collector.add(errorCode.message);
+  }
 }
 
 /**
@@ -91,25 +41,16 @@ function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T): Rea
  * ```
  */
 export function defineErrorCode<T extends ErrorCodeDefinition>(definition: T): Readonly<T> {
-  // 注册到待采集列表,等 collector 初始化后统一采集
-  pendingErrorCodes.push(definition);
-
-  return createErrorCodeProxy(definition);
-}
-
-/**
- * 采集错误码的 i18n key
- */
-function collectErrorCodes(definition: ErrorCodeDefinition) {
   const collector = getI18nCollector();
-  if (!collector) return;
-
-  for (const key of Object.keys(definition)) {
-    const errorCode = definition[key];
-    // 使用 message 的值作为 i18n key
-    collector.add(errorCode.message);
+  if (collector) {
+    collectErrorCodeDefinition(definition);
+  } else {
+    pendingErrorCodes.push(definition);
   }
+
+  return Object.freeze(definition) as Readonly<T>;
 }
+
 
 /**
  * 处理所有待采集的错误码
@@ -121,9 +62,8 @@ export function flushPendingErrorCodes() {
   if (!collector) return;
 
   for (const definition of pendingErrorCodes) {
-    collectErrorCodes(definition);
+    collectErrorCodeDefinition(definition);
   }
 
-  // 清空待采集列表
   pendingErrorCodes.length = 0;
 }
