@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Logger } from "@nestjs/common";
 
@@ -14,27 +14,86 @@ import { Logger } from "@nestjs/common";
 export class I18nCollectorServer {
   private readonly logger = new Logger(I18nCollectorServer.name);
   private readonly pendingKeys = new Set<string>();
+  private readonly existingKeys = new Set<string>(); // 已存在的 key 集合
   private readonly localesDir: string;
   private flushTimer: NodeJS.Timeout | null = null;
-  private readonly flushInterval = 30000; // 30秒批量写入一次
+  private readonly flushInterval = 10000; // 10秒批量写入一次
   private readonly fileLocks = new Map<string, Promise<void>>();
+  private languages: string[] = [];
 
   constructor(localesDir: string) {
     this.localesDir = localesDir;
 
-    // 确保 locales 目录存在
     if (!existsSync(this.localesDir)) {
       mkdirSync(this.localesDir, { recursive: true });
     }
 
-    // 启动定时写入
+    // 扫描 locales 目录,获取所有语言文件
+    this.scanLanguages();
+
+    // 加载已存在的 keys
+    this.loadExistingKeys();
+
     this.startFlushWorker();
+  }
+
+  /**
+   * 扫描 locales 目录,获取所有 JSON 语言文件
+   */
+  private scanLanguages() {
+    try {
+      const files = readdirSync(this.localesDir);
+      this.languages = files
+        .filter((file) => file.endsWith(".json") && !file.startsWith("."))
+        .map((file) => file.replace(".json", ""));
+
+      if (this.languages.length === 0) {
+        this.logger.warn("未找到任何语言文件,将使用默认语言: en, zh-CN");
+        this.languages = ["en", "zh-CN"];
+      } else {
+        this.logger.log(`检测到 ${this.languages.length} 个语言文件: ${this.languages.join(", ")}`);
+      }
+    } catch (error) {
+      this.logger.error("扫描语言文件失败:", error);
+      this.languages = ["en", "zh-CN"];
+    }
+  }
+
+  /**
+   * 加载所有已存在的 keys (从第一个语言文件加载即可)
+   */
+  private loadExistingKeys() {
+    if (this.languages.length === 0) return;
+
+    try {
+      const firstLang = this.languages[0];
+      const filePath = join(this.localesDir, `${firstLang}.json`);
+
+      if (existsSync(filePath)) {
+        const content = readFileSync(filePath, "utf-8");
+        const data = JSON.parse(content);
+
+        // 提取所有 key (不包括 namespace 前缀)
+        for (const key of Object.keys(data)) {
+          this.existingKeys.add(key);
+        }
+
+        this.logger.log(`从 ${firstLang}.json 加载了 ${this.existingKeys.size} 个已存在的 key`);
+      }
+    } catch (error) {
+      this.logger.warn("加载已存在 keys 失败,将标记所有 key 为缺失:", error);
+    }
   }
 
   /**
    * 添加缺失的翻译键
    */
   add(namespace: string, key: string) {
+    // 检查 key 是否已存在
+    if (this.existingKeys.has(key)) {
+      return; // 已存在,不需要添加
+    }
+
     const fullKey = namespace ? `${namespace}:${key}` : key;
 
     if (this.pendingKeys.has(fullKey)) {
@@ -49,12 +108,10 @@ export class I18nCollectorServer {
    * 启动定时写入 Worker
    */
   private startFlushWorker() {
-    // 进程退出时写入
     process.on("beforeExit", () => {
       this.flushNow();
     });
 
-    // 定时写入
     this.flushTimer = setInterval(() => {
       this.flushNow();
     }, this.flushInterval);
@@ -73,6 +130,13 @@ export class I18nCollectorServer {
 
     try {
       await this.writeToLocales(keys);
+
+      // 写入成功后,将这些 key 添加到 existingKeys 中
+      for (const fullKey of keys) {
+        const key = fullKey.includes(":") ? fullKey.split(":").slice(1).join(":") : fullKey;
+        this.existingKeys.add(key);
+      }
+
       this.pendingKeys.clear();
       this.logger.log(`成功写入 ${keys.length} 个翻译键`);
     } catch (error) {
@@ -84,9 +148,7 @@ export class I18nCollectorServer {
    * 写入到 locales 文件（并发安全）
    */
   private async writeToLocales(keys: string[]) {
-    const languages = ["en", "zh-CN"];
-
-    await Promise.all(languages.map((lang) => this.writeToLanguageFile(lang, keys)));
+    await Promise.all(this.languages.map((lang) => this.writeToLanguageFile(lang, keys)));
   }
 
   /**
@@ -97,11 +159,9 @@ export class I18nCollectorServer {
     const filePath = join(this.localesDir, langFile);
     const tempFilePath = join(this.localesDir, `.${langFile}.tmp`);
 
-    // 获取文件锁
     const releaseLock = await this.acquireLock(filePath);
 
     try {
-      // 读取现有内容
       let content: Record<string, string> = {};
       if (existsSync(filePath)) {
         try {
@@ -114,25 +174,19 @@ export class I18nCollectorServer {
 
       let added = 0;
 
-      // 添加缺失的键
       for (const fullKey of keys) {
-        // fullKey 格式: "namespace:key" 或 "key"
         const key = fullKey.includes(":") ? fullKey.split(":").slice(1).join(":") : fullKey;
 
-        // 检查是否已存在（不覆盖已有翻译）
         if (!content[key]) {
-          // value 等于 key，标记为未翻译状态
           content[key] = key;
           added++;
         }
       }
 
-      // 如果没有新增内容，跳过写入
       if (added === 0) {
         return;
       }
 
-      // 按键名字符排序（Unicode 排序）
       const sortedContent = Object.keys(content)
         .sort((a, b) => a.localeCompare(b, "zh-CN"))
         .reduce(
@@ -143,11 +197,9 @@ export class I18nCollectorServer {
           {} as Record<string, string>,
         );
 
-      // 写入临时文件
       const jsonContent = JSON.stringify(sortedContent, null, 2);
       writeFileSync(tempFilePath, jsonContent, "utf-8");
 
-      // 原子重命名（覆盖原文件）
       renameSync(tempFilePath, filePath);
 
       this.logger.log(`${langFile}: 新增 ${added} 个翻译键`);
@@ -155,7 +207,6 @@ export class I18nCollectorServer {
       this.logger.error(`写入 ${langFile} 失败:`, error);
       throw error;
     } finally {
-      // 释放锁
       releaseLock();
     }
   }
@@ -164,12 +215,10 @@ export class I18nCollectorServer {
    * 获取文件锁
    */
   private async acquireLock(filePath: string): Promise<() => void> {
-    // 等待当前文件的锁释放
     while (this.fileLocks.has(filePath)) {
       await this.fileLocks.get(filePath);
     }
 
-    // 创建新锁
     let releaseLock: () => void;
     const lockPromise = new Promise<void>((resolve) => {
       releaseLock = resolve;
@@ -177,7 +226,6 @@ export class I18nCollectorServer {
 
     this.fileLocks.set(filePath, lockPromise);
 
-    // 返回释放锁的函数
     return () => {
       this.fileLocks.delete(filePath);
       releaseLock!();
@@ -193,7 +241,6 @@ export class I18nCollectorServer {
       this.flushTimer = null;
     }
 
-    // 停止前写入一次
     this.flushNow();
   }
 }
@@ -211,6 +258,28 @@ export function initI18nCollector(localesDir: string) {
 
   if (!collectorInstance) {
     collectorInstance = new I18nCollectorServer(localesDir);
+
+    // 初始化后立即采集所有待处理的内容
+    // 使用动态导入避免循环依赖
+    setImmediate(() => {
+      try {
+        // 采集错误码
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { flushPendingErrorCodes } = require("../errors/define-error-code");
+        flushPendingErrorCodes();
+      } catch (_error) {
+        // 忽略错误,可能 define-error-code 还未加载
+      }
+
+      try {
+        // 采集 Zod Schema 验证消息
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const { flushPendingSchemas } = require("../validation/create-i18n-zod-dto");
+        flushPendingSchemas();
+      } catch (_error) {
+        // 忽略错误,可能 create-i18n-zod-dto 还未加载
+      }
+    });
   }
 
   return collectorInstance;

@@ -1,13 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { createZodDto } from "nestjs-zod";
 
 import { PageRequestSchema } from "@meta-1/nest-types";
+import { createI18nZodDto } from "../validation";
 
 /**
  * 分页请求 DTO
  * 从 Schema 生成，用于 Controller 参数验证和 Swagger 文档
  */
-export class PageRequestDto extends createZodDto(PageRequestSchema) {}
+export class PageRequestDto extends createI18nZodDto(PageRequestSchema) {}
 
 /**
  * 分页响应 DTO（泛型类）

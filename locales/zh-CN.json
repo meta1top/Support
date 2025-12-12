@@ -1,3 +1,21 @@
 {
-  "测试": "测试"
+  "查询消息不能为空": "查询消息不能为空",
+  "获取锁失败，操作正在处理中，请稍后重试。": "获取锁失败，操作正在处理中，请稍后重试。",
+  "获取锁时发生错误。": "获取锁时发生错误。",
+  "释放锁时发生错误。": "释放锁时发生错误。",
+  "文档 ID 不能为空": "文档 ID 不能为空",
+  "文档内容不能为空": "文档内容不能为空",
+  "文件 Key 不能为空": "文件 Key 不能为空",
+  "文件名不能为空": "文件名不能为空",
+  "消息内容不能为空": "消息内容不能为空",
+  "邮箱格式不正确": "邮箱格式不正确",
+  "Config is invalid": "Config is invalid",
+  "Config not found": "Config not found",
+  "Forbidden": "Forbidden",
+  "I18nContext not found. Make sure I18nModule is properly configured.": "I18nContext not found. Make sure I18nModule is properly configured.",
+  "Not Found": "Not Found",
+  "Redis 未注入。请确保已配置 Redis 并使用 LockInitializer 初始化分布式锁。": "Redis 未注入。请确保已配置 Redis 并使用 LockInitializer 初始化分布式锁。",
+  "Server Error": "Server Error",
+  "Unauthorized": "Unauthorized",
+  "Validation Failed": "Validation Failed"
 }

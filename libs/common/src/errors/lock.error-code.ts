@@ -1,9 +1,11 @@
+import { defineErrorCode } from "./define-error-code";
+
 /**
  * 分布式锁错误码定义
  *
  * 错误码范围：100-199
  */
-export const LockErrorCode = {
+export const LockErrorCode = defineErrorCode({
   // Redis 相关错误 (100-109)
   REDIS_NOT_INJECTED: {
     code: 100,
@@ -23,4 +25,4 @@ export const LockErrorCode = {
     code: 112,
     message: "释放锁时发生错误。",
   },
-} as const;
+});

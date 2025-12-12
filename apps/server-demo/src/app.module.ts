@@ -9,13 +9,12 @@ import { SnakeNamingStrategy } from "typeorm-naming-strategies";
 
 import { AiModule } from "@meta-1/nest-ai";
 import { AssetsModule } from "@meta-1/nest-assets";
-import { CommonModule } from "@meta-1/nest-common";
+import { CommonModule, getI18nCollector, initI18nCollector } from "@meta-1/nest-common";
 import { MessageModule } from "@meta-1/nest-message";
 import { SecurityModule } from "@meta-1/nest-security";
 import { AppController, AssetsController, MailCodeController, TestLockController } from "./controller";
 import { TestLockService } from "./service";
 import { AppConfig } from "./shared";
-import { getI18nCollector, initI18nCollector } from "./utils/i18n-collector";
 
 @Module({})
 export class AppModule {

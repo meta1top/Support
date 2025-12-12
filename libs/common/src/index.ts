@@ -9,3 +9,4 @@ export * from "./i18n";
 export * from "./interceptors";
 export * from "./shared";
 export * from "./swagger/page.helper";
+export * from "./validation";
