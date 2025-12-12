@@ -37,11 +37,11 @@ export class ErrorsFilter implements ExceptionFilter {
     } else if (exception instanceof ZodValidationException) {
       // biome-ignore lint/suspicious/noExplicitAny: <getResponse>
       const res = exception.getResponse() as any;
-      message = res.message || "Validation failed";
+      message = res.message || "Validation Failed";
       data = res.errors || null;
 
       if (i18n) {
-        message = i18n.t("Validation failed");
+        message = i18n.t("Validation Failed");
 
         if (data && Array.isArray(data)) {
           // 翻译 Zod 验证错误中的每个字段的 message
