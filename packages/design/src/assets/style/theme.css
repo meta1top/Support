@@ -170,7 +170,7 @@
 }
 
 @utility action-active {
-  @apply text-primary bg-[var(--action-hover)] font-bold;
+  @apply text-primary bg-[var(--action-hover)];
 }
 
 @utility action-effect-disabled {
