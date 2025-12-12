@@ -12,6 +12,8 @@ const pendingSchemas: Array<{ schema: ZodSchema; namespace: string }> = [];
 /**
  * 通用的递归遍历对象,提取所有 message 字段
  */
+
+// biome-ignore lint/suspicious/noExplicitAny: extractMessagesFromObject
 function extractMessagesFromObject(obj: any, messages: Set<string>, visited = new WeakSet()): void {
   // 避免循环引用
   if (obj === null || obj === undefined) return;
@@ -51,6 +53,7 @@ function extractMessagesFromObject(obj: any, messages: Set<string>, visited = ne
 
         for (const testData of testCases) {
           obj.effect.refinement(testData, {
+            // biome-ignore lint/suspicious/noExplicitAny: issue
             addIssue: (issue: any) => {
               if (issue.message && typeof issue.message === "string") {
                 messages.add(issue.message);
@@ -98,6 +101,7 @@ function extractMessagesFromObject(obj: any, messages: Set<string>, visited = ne
  */
 function extractErrorMessages(schema: ZodSchema, messages: Set<string> = new Set()): Set<string> {
   try {
+    // biome-ignore lint/suspicious/noExplicitAny: schemaDef
     const schemaDef = (schema as any)._def;
     if (!schemaDef) return messages;
 
