@@ -41,11 +41,10 @@ export class ErrorsFilter implements ExceptionFilter {
       data = res.errors || null;
 
       if (i18n) {
-        // ZodValidationException 的 message 是国际化 key，需要翻译
-        message = i18n.t(message);
+        message = i18n.t("Validation failed");
 
-        // 翻译 Zod 验证错误中的每个字段的 message
         if (data && Array.isArray(data)) {
+          // 翻译 Zod 验证错误中的每个字段的 message
           // biome-ignore lint/suspicious/noExplicitAny: validation errors
           data = data.map((error: any) => ({
             ...error,
