@@ -12,7 +12,7 @@ export class I18nContext {
     if (process.env.NODE_ENV === "development") {
       const collector = getI18nCollector();
       if (collector) {
-        collector.add(this.namespace, key);
+        collector.add(key);
       }
     }
 

@@ -55,15 +55,11 @@ export class AppModule {
           missingKeyHandler: (key: string) => {
             const collector = getI18nCollector();
             if (collector) {
-              // key 格式: "common.用户不存在" 或 "用户不存在"
-              // 拆分 namespace 和实际 key
               if (key.includes(".")) {
-                const parts = key.split(".");
-                const namespace = parts[0];
-                const actualKey = parts.slice(1).join(".");
-                collector.add(namespace, actualKey);
+                const actualKey = key.split(".").slice(1).join(".");
+                collector.add(actualKey);
               } else {
-                collector.add("common", key);
+                collector.add(key);
               }
             }
           },

@@ -88,20 +88,17 @@ export class I18nCollectorServer {
   /**
    * 添加缺失的翻译键
    */
-  add(namespace: string, key: string) {
-    // 检查 key 是否已存在
+  add(key: string) {
     if (this.existingKeys.has(key)) {
-      return; // 已存在,不需要添加
-    }
-
-    const fullKey = namespace ? `${namespace}:${key}` : key;
-
-    if (this.pendingKeys.has(fullKey)) {
       return;
     }
 
-    this.pendingKeys.add(fullKey);
-    this.logger.warn(`发现缺失翻译键: ${fullKey}`);
+    if (this.pendingKeys.has(key)) {
+      return;
+    }
+
+    this.pendingKeys.add(key);
+    this.logger.warn(`发现缺失翻译键: ${key}`);
   }
 
   /**
@@ -132,8 +129,7 @@ export class I18nCollectorServer {
       await this.writeToLocales(keys);
 
       // 写入成功后,将这些 key 添加到 existingKeys 中
-      for (const fullKey of keys) {
-        const key = fullKey.includes(":") ? fullKey.split(":").slice(1).join(":") : fullKey;
+      for (const key of keys) {
         this.existingKeys.add(key);
       }
 
@@ -174,9 +170,7 @@ export class I18nCollectorServer {
 
       let added = 0;
 
-      for (const fullKey of keys) {
-        const key = fullKey.includes(":") ? fullKey.split(":").slice(1).join(":") : fullKey;
-
+      for (const key of keys) {
         if (!content[key]) {
           content[key] = key;
           added++;

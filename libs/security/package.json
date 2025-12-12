@@ -1,6 +1,6 @@
 {
   "name": "@meta-1/nest-security",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Security utilities and decorators for NestJS applications",
   "author": "",
   "license": "MIT",

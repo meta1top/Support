@@ -7,7 +7,7 @@ import { getI18nCollector } from "../i18n/i18n-collector";
  * 待采集的 Schema 注册表
  * 用于在 collector 初始化前暂存 Schema
  */
-const pendingSchemas: Array<{ schema: ZodSchema; namespace: string }> = [];
+const pendingSchemas: ZodSchema[] = [];
 
 /**
  * 通用的递归遍历对象,提取所有 message 字段
@@ -117,18 +117,18 @@ function extractErrorMessages(schema: ZodSchema, messages: Set<string> = new Set
 /**
  * 采集 Schema 中的所有错误消息到 i18n collector
  */
-function collectSchemaMessages(schema: ZodSchema, namespace: string = "common") {
+function collectSchemaMessages(schema: ZodSchema) {
   const collector = getI18nCollector();
 
   if (!collector) {
     // collector 未初始化,注册到待采集列表
-    pendingSchemas.push({ schema, namespace });
+    pendingSchemas.push(schema);
     return;
   }
 
   const messages = extractErrorMessages(schema);
   for (const message of messages) {
-    collector.add(namespace, message);
+    collector.add(message);
   }
 }
 
@@ -141,10 +141,10 @@ export function flushPendingSchemas() {
   const collector = getI18nCollector();
   if (!collector) return;
 
-  for (const { schema, namespace } of pendingSchemas) {
+  for (const schema of pendingSchemas) {
     const messages = extractErrorMessages(schema);
     for (const message of messages) {
-      collector.add(namespace, message);
+      collector.add(message);
     }
   }
 
@@ -157,7 +157,6 @@ export function flushPendingSchemas() {
  * 自动采集 Schema 中的所有验证错误消息
  *
  * @param schema - Zod Schema
- * @param options - 配置选项
  * @returns DTO 类
  *
  * @example
@@ -168,20 +167,9 @@ export function flushPendingSchemas() {
  * export class SendCodeDto extends createI18nZodDto(SendCodeSchema) {}
  * ```
  */
-export function createI18nZodDto<T extends ZodSchema>(
-  schema: T,
-  options?: {
-    /**
-     * i18n 命名空间
-     * @default "common"
-     */
-    namespace?: string;
-  },
-) {
-  const namespace = options?.namespace ?? "common";
-
+export function createI18nZodDto<T extends ZodSchema>(schema: T) {
   // 采集 Schema 中的错误消息
-  collectSchemaMessages(schema, namespace);
+  collectSchemaMessages(schema);
 
   // 返回标准的 Zod DTO
   return createZodDto(schema);

@@ -1,4 +1,4 @@
-import type { AppErrorCode } from "@meta-1/nest-common";
+import { defineErrorCode } from "@meta-1/nest-common";
 
 /**
  * Message 模块错误码定义
@@ -6,8 +6,7 @@ import type { AppErrorCode } from "@meta-1/nest-common";
  *
  * 错误码范围：1000-1199
  */
-export const ErrorCode: Record<string, AppErrorCode> = {
-  // 验证码相关错误 (1000-1099)
+export const ErrorCode = defineErrorCode({
   VERIFICATION_CODE_STORAGE_FAILED: { code: 1000, message: "Verification code storage failed" },
   EMAIL_SENDING_FAILED: { code: 1001, message: "Email sending failed" },
   VERIFICATION_CODE_SEND_FAILED: { code: 1002, message: "Failed to send verification code" },
@@ -17,8 +16,6 @@ export const ErrorCode: Record<string, AppErrorCode> = {
     code: 1005,
     message: "Verification code sent too frequently, please try again later",
   },
-
-  // 邮件服务错误 (1100-1199)
   MAIL_SERVICE_NOT_CONFIGURED: { code: 1100, message: "Mail service not configured correctly" },
   MAIL_CONTENT_EMPTY: { code: 1101, message: "Email content cannot be empty" },
-};
+});

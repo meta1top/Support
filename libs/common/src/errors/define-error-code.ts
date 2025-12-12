@@ -9,13 +9,13 @@ export type ErrorCodeDefinition = Record<string, { code: number; message: string
  * 待采集的错误码注册表
  * 用于在 collector 初始化前暂存错误码定义
  */
-const pendingErrorCodes: Array<{ definition: ErrorCodeDefinition; namespace: string }> = [];
+const pendingErrorCodes: ErrorCodeDefinition[] = [];
 
 /**
  * 错误代码代理处理器
  * 在访问时自动采集 i18n key
  */
-function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T, namespace: string): Readonly<T> {
+function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T): Readonly<T> {
   // 记录已采集的 message,避免重复采集
   const collectedMessages = new Set<string>();
 
@@ -38,7 +38,7 @@ function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T, name
 
             if (collector) {
               // 使用 message 的值作为 i18n key
-              collector.add(namespace, value);
+              collector.add(value);
               collectedMessages.add(value);
             }
           }
@@ -57,7 +57,6 @@ function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T, name
  * 自动为所有错误代码添加 i18n 支持并采集 key
  *
  * @param definition - 错误代码定义对象
- * @param options - 配置选项
  * @returns 冻结的错误代码对象
  *
  * @example
@@ -68,35 +67,24 @@ function createErrorCodeProxy<T extends ErrorCodeDefinition>(definition: T, name
  * });
  * ```
  */
-export function defineErrorCode<T extends ErrorCodeDefinition>(
-  definition: T,
-  options?: {
-    /**
-     * 命名空间,用于 i18n key 前缀
-     * @default "common"
-     */
-    namespace?: string;
-  },
-): Readonly<T> {
-  const namespace = options?.namespace ?? "common";
-
+export function defineErrorCode<T extends ErrorCodeDefinition>(definition: T): Readonly<T> {
   // 注册到待采集列表,等 collector 初始化后统一采集
-  pendingErrorCodes.push({ definition, namespace });
+  pendingErrorCodes.push(definition);
 
-  return createErrorCodeProxy(definition, namespace);
+  return createErrorCodeProxy(definition);
 }
 
 /**
  * 采集错误码的 i18n key
  */
-function collectErrorCodes(definition: ErrorCodeDefinition, namespace: string) {
+function collectErrorCodes(definition: ErrorCodeDefinition) {
   const collector = getI18nCollector();
   if (!collector) return;
 
   for (const key of Object.keys(definition)) {
     const errorCode = definition[key];
     // 使用 message 的值作为 i18n key
-    collector.add(namespace, errorCode.message);
+    collector.add(errorCode.message);
   }
 }
 
@@ -109,24 +97,10 @@ export function flushPendingErrorCodes() {
   const collector = getI18nCollector();
   if (!collector) return;
 
-  for (const { definition, namespace } of pendingErrorCodes) {
-    collectErrorCodes(definition, namespace);
+  for (const definition of pendingErrorCodes) {
+    collectErrorCodes(definition);
   }
 
   // 清空待采集列表
   pendingErrorCodes.length = 0;
-}
-
-/**
- * 批量定义错误代码并立即采集
- * 适用于需要提前采集所有 key 的场景
- *
- * @param definition - 错误代码定义对象
- * @param namespace - 命名空间
- */
-export function defineAndCollectErrorCode<T extends ErrorCodeDefinition>(
-  definition: T,
-  namespace = "common",
-): Readonly<T> {
-  return defineErrorCode(definition, { namespace });
 }
